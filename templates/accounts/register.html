@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Register | Study Recommender{% endblock %}
+
+{% block content %}
+<div id="django-csrf" style="display:none">{% csrf_token %}</div>
+<div id="auth-root"></div>
+
+<script>
+  window.__AUTH_REGISTER_PROPS__ = {
+    error: "{{ error|default:''|escapejs }}"
+  };
+</script>
+
+<!-- React (CDN) -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+<script>
+  (function () {
+    function getCookie(name) {
+      var cookieValue = null;
+      if (document.cookie && document.cookie !== "") {
+        var cookies = document.cookie.split(";");
+        for (var i = 0; i < cookies.length; i++) {
+          var cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + "=")) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    var e = React.createElement;
+    var props = window.__AUTH_REGISTER_PROPS__ || {};
+    var csrfToken = (function () {
+      var el = document.querySelector("#django-csrf input[name=csrfmiddlewaretoken]");
+      return (el && el.value) ? el.value : (getCookie("csrftoken") || "");
+    })();
+
+    function RegisterApp() {
+      var _a = React.useState("student"), role = _a[0], setRole = _a[1];
+      var _b = React.useState(false), showPw = _b[0], setShowPw = _b[1];
+      var _c = React.useState(false), showConfirm = _c[0], setShowConfirm = _c[1];
+      var _d = React.useState(""), pw = _d[0], setPw = _d[1];
+      var _e = React.useState(""), confirm = _e[0], setConfirm = _e[1];
+
+      var pwMismatch = pw && confirm && pw !== confirm;
+      var pwShort = pw && pw.length < 6;
+
+      return e("div", { className: "row justify-content-center g-4 align-items-stretch" },
+        e("div", { className: "col-lg-6" },
+          e("div", { className: "card shadow-sm h-100" },
+            e("div", { className: "card-body p-4" },
+              e("div", { className: "d-flex justify-content-between align-items-start gap-3" },
+                e("div", null,
+                  e("h3", { className: "mb-1" }, "Register"),
+                  e("div", { className: "text-muted" }, "Create an account and select your role (Teacher / Student).")
+                ),
+                e("span", { className: "badge text-bg-success align-self-start" }, "New Account")
+              ),
+
+              props.error ? e("div", { className: "alert alert-danger mt-3 mb-0" }, props.error) : null,
+
+              e("form", { method: "post", className: "mt-3" },
+                e("input", { type: "hidden", name: "csrfmiddlewaretoken", value: csrfToken }),
+
+                e("div", { className: "mb-3" },
+                  e("label", { className: "form-label", htmlFor: "username" }, "Username"),
+                  e("input", { className: "form-control", id: "username", type: "text", name: "username", autoComplete: "username", required: true })
+                ),
+
+                e("div", { className: "row g-3" },
+                  e("div", { className: "col-md-6" },
+                    e("label", { className: "form-label", htmlFor: "password" }, "Password"),
+                    e("div", { className: "input-group" },
+                      e("input", {
+                        className: "form-control",
+                        id: "password",
+                        type: showPw ? "text" : "password",
+                        name: "password",
+                        value: pw,
+                        onChange: function (ev) { setPw(ev.target.value); },
+                        autoComplete: "new-password",
+                        required: true
+                      }),
+                      e("button", { className: "btn btn-outline-secondary", type: "button", onClick: function () { setShowPw(!showPw); } }, showPw ? "Hide" : "Show")
+                    ),
+                    e("div", { className: "form-text" }, "Minimum 6 characters."),
+                    pwShort ? e("div", { className: "text-danger small" }, "Password is too short.") : null
+                  ),
+                  e("div", { className: "col-md-6" },
+                    e("label", { className: "form-label", htmlFor: "confirm_password" }, "Confirm Password"),
+                    e("div", { className: "input-group" },
+                      e("input", {
+                        className: "form-control",
+                        id: "confirm_password",
+                        type: showConfirm ? "text" : "password",
+                        name: "confirm_password",
+                        value: confirm,
+                        onChange: function (ev) { setConfirm(ev.target.value); },
+                        autoComplete: "new-password",
+                        required: true
+                      }),
+                      e("button", { className: "btn btn-outline-secondary", type: "button", onClick: function () { setShowConfirm(!showConfirm); } }, showConfirm ? "Hide" : "Show")
+                    ),
+                    pwMismatch ? e("div", { className: "text-danger small mt-1" }, "Passwords do not match.") : null
+                  )
+                ),
+
+                e("div", { className: "mt-3" },
+                  e("div", { className: "d-flex justify-content-between align-items-center" },
+                    e("label", { className: "form-label mb-0" }, "Role"),
+                    e("span", { className: "badge text-bg-light border text-dark" }, role === "teacher" ? "Teacher" : "Student")
+                  ),
+                  e("div", { className: "d-flex gap-3 flex-wrap mt-2" },
+                    e("div", { className: "form-check" },
+                      e("input", {
+                        className: "form-check-input",
+                        type: "radio",
+                        name: "role",
+                        id: "role_student",
+                        value: "student",
+                        checked: role === "student",
+                        onChange: function () { setRole("student"); }
+                      }),
+                      e("label", { className: "form-check-label", htmlFor: "role_student" }, "Student")
+                    ),
+                    e("div", { className: "form-check" },
+                      e("input", {
+                        className: "form-check-input",
+                        type: "radio",
+                        name: "role",
+                        id: "role_teacher",
+                        value: "teacher",
+                        checked: role === "teacher",
+                        onChange: function () { setRole("teacher"); }
+                      }),
+                      e("label", { className: "form-check-label", htmlFor: "role_teacher" }, "Teacher")
+                    )
+                  ),
+                  e("div", { className: "form-text" }, "Role controls dashboard access and available features.")
+                ),
+
+                e("button", {
+                  className: "btn btn-success w-100 mt-4",
+                  type: "submit",
+                  disabled: !!(pwMismatch || pwShort)
+                }, "Create Account")
+              ),
+
+              e("div", { className: "mt-3 text-center" },
+                e("span", { className: "text-muted" }, "Already have an account? "),
+                e("a", { href: "/" }, "Login")
+              )
+            )
+          )
+        ),
+
+        e("div", { className: "col-lg-5" },
+          e("div", { className: "card shadow-sm h-100", style: { background: "linear-gradient(135deg, rgba(25,135,84,.10), rgba(13,110,253,.10))", border: "1px solid rgba(0,0,0,.06)" } },
+            e("div", { className: "card-body p-4" },
+              e("h5", { className: "mb-2" }, "Academic Note"),
+              e("div", { className: "text-muted small mb-3" },
+                "This project predicts final exam outcomes using continuous assessment, attendance, and previous CGPA. Final marks are not entered by students."
+              ),
+              e("ul", { className: "mb-0" },
+                e("li", null, "Student: enter marks, view predictions, get study materials"),
+                e("li", null, "Teacher: manage materials, view student analytics")
+              )
+            )
+          )
+        )
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("auth-root")).render(e(RegisterApp));
+  })();
+</script>
+{% endblock %}

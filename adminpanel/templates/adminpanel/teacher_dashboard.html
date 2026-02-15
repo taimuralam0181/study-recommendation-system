@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Teacher Dashboard | Study Recommender{% endblock %}
+
+{% block content %}
+<div id="teacher-dashboard-root"></div>
+
+<script>
+  window.__TEACHER_DASHBOARD_PROPS__ = {
+    total_students: {{ total_students|default:0 }},
+    avg_overall: {{ avg_overall|default:0 }},
+    weakest_subject: "{{ weakest_subject|default:'-'|escapejs }}",
+    dataset_rows: {{ dataset_rows|default:0 }},
+    avg_math: {{ avg_math|default:0 }},
+    avg_physics: {{ avg_physics|default:0 }},
+    avg_cs: {{ avg_cs|default:0 }},
+    level_counts: [
+      {% for row in level_counts %}
+      { level: "{{ row.level|escapejs }}", count: {{ row.count }} }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ],
+    dataset_sources: [
+      {% for s in dataset_sources %}
+      "{{ s|escapejs }}"{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ]
+  };
+</script>
+
+<!-- React (CDN) -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+<script>
+  (function () {
+    var e = React.createElement;
+    var props = window.__TEACHER_DASHBOARD_PROPS__ || {};
+
+    function StatCard(p) {
+      return e("div", { className: "card shadow-sm h-100" },
+        e("div", { className: "card-body" },
+          e("div", { className: "text-muted text-uppercase small" }, p.label),
+          e("div", { className: "fs-3 fw-bold" }, p.value)
+        )
+      );
+    }
+
+    function TeacherDashboard() {
+      var levelCounts = props.level_counts || [];
+      var sources = props.dataset_sources || [];
+      var avgOverall = Number(props.avg_overall || 0);
+
+      return e("div", null,
+        e("div", { className: "d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2" },
+          e("div", null,
+            e("h3", { className: "mb-1" }, "Teacher Dashboard"),
+            e("div", { className: "text-muted" }, "Academic overview of student performance and dataset status.")
+          ),
+          e("div", { className: "d-flex gap-2 flex-wrap" },
+            e("a", { className: "btn btn-outline-primary", href: "/teacher/students/" }, "Students"),
+            e("a", { className: "btn btn-outline-primary", href: "/teacher/subjects/" }, "Subjects"),
+            e("a", { className: "btn btn-outline-primary", href: "/teacher/materials/" }, "Materials"),
+            e("a", { className: "btn btn-outline-primary", href: "/teacher/analytics/" }, "Analytics"),
+            e("a", { className: "btn btn-outline-primary", href: "/teacher/recovery/" }, "Recovery"),
+            e("a", { className: "btn btn-outline-primary", href: "/teacher/upload-dataset/" }, "Upload Dataset"),
+            e("a", { className: "btn btn-primary", href: "/teacher/materials/add/" }, "Add Material")
+          )
+        ),
+
+        e("div", { className: "row g-3" },
+          e("div", { className: "col-md-3" }, e(StatCard, { label: "Total Students", value: props.total_students || 0 })),
+          e("div", { className: "col-md-3" }, e(StatCard, { label: "Avg Overall Score", value: avgOverall.toFixed(1) })),
+          e("div", { className: "col-md-3" }, e(StatCard, { label: "Weakest Subject", value: props.weakest_subject || "-" })),
+          e("div", { className: "col-md-3" }, e(StatCard, { label: "Dataset Rows", value: props.dataset_rows || 0 }))
+        ),
+
+        e("div", { className: "row g-3 mt-1" },
+          e("div", { className: "col-lg-6" },
+            e("div", { className: "card shadow-sm" },
+              e("div", { className: "card-body p-4" },
+                e("h5", { className: "card-title mb-3" }, "Subject Averages"),
+                e("div", { className: "row g-2" },
+                  e("div", { className: "col-4" }, e("div", { className: "text-muted small" }, "Math"), e("div", { className: "fw-bold" }, Number(props.avg_math || 0).toFixed(1))),
+                  e("div", { className: "col-4" }, e("div", { className: "text-muted small" }, "Physics"), e("div", { className: "fw-bold" }, Number(props.avg_physics || 0).toFixed(1))),
+                  e("div", { className: "col-4" }, e("div", { className: "text-muted small" }, "Computer Science"), e("div", { className: "fw-bold" }, Number(props.avg_cs || 0).toFixed(1)))
+                )
+              )
+            )
+          ),
+          e("div", { className: "col-lg-6" },
+            e("div", { className: "card shadow-sm" },
+              e("div", { className: "card-body p-4" },
+                e("h5", { className: "card-title mb-3" }, "Level Distribution"),
+                levelCounts.length ? e("ul", { className: "mb-0" },
+                  levelCounts.map(function (r, idx) {
+                    return e("li", { key: idx }, r.level + ": " + r.count);
+                  })
+                ) : e("div", { className: "text-muted" }, "No student records yet.")
+              )
+            )
+          )
+        ),
+
+        e("div", { className: "card shadow-sm mt-3" },
+          e("div", { className: "card-body p-4" },
+            e("h5", { className: "card-title mb-2" }, "Dataset Summary"),
+            props.dataset_rows ? (
+              e("div", null,
+                e("div", { className: "text-muted mb-2" }, "Imported rows: ", e("strong", null, props.dataset_rows)),
+                sources.length ? e("div", null,
+                  e("div", { className: "text-muted mb-1" }, "Sources (latest 5):"),
+                  e("ul", { className: "mb-0" }, sources.slice(0, 5).map(function (s, idx) { return e("li", { key: idx }, s); }))
+                ) : null
+              )
+            ) : (
+              e("div", { className: "alert alert-info mb-0" },
+                "No dataset imported yet. Use: ",
+                e("code", null, "python manage.py load_kaggle_dataset --dataset <slug>")
+              )
+            )
+          )
+        )
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("teacher-dashboard-root")).render(e(TeacherDashboard));
+  })();
+</script>
+{% endblock %}

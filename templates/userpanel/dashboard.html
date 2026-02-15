@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard | Study Recommender{% endblock %}
+
+{% block content %}
+<div id="student-dashboard-root"></div>
+
+<script>
+  window.__STUDENT_DASHBOARD_PROPS__ = {
+    username: "{{ request.user.username|escapejs }}",
+    student: {% if student %}{
+      level: "{{ student.level|escapejs }}",
+      math_marks: {{ student.math_marks|default:0 }},
+      physics_marks: {{ student.physics_marks|default:0 }},
+      cs_marks: {{ student.cs_marks|default:0 }},
+      avg_score: {{ student.avg_score|default:0 }}
+    }{% else %}null{% endif %},
+    ml_explanation: "{{ ml_explanation|default:''|escapejs }}",
+    academic_ml: {% if academic_ml %}{
+      performance_cluster: "{{ academic_ml.performance_cluster|escapejs }}",
+      study_level: "{{ academic_ml.study_level|escapejs }}",
+      explanation: "{{ academic_ml.explanation|escapejs }}",
+      features: {
+        n_subjects: {{ academic_ml.features.n_subjects|default:0 }}
+      }
+    }{% else %}null{% endif %},
+    history: [
+      {% for item in history %}
+      {
+        created_at: "{{ item.created_at|date:'Y-m-d H:i'|escapejs }}",
+        math_marks: {{ item.math_marks }},
+        physics_marks: {{ item.physics_marks }},
+        cs_marks: {{ item.cs_marks }},
+        avg_score: {{ item.avg_score|floatformat:1 }},
+        level: "{{ item.level|escapejs }}"
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ]
+  };
+</script>
+
+<!-- React (CDN) -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+<script>
+  (function () {
+    var e = React.createElement;
+    var props = window.__STUDENT_DASHBOARD_PROPS__ || {};
+
+    function Badge(p) {
+      var cls = "badge " + (p.className || "text-bg-secondary");
+      return e("span", { className: cls }, p.children);
+    }
+
+    function StudentDashboard() {
+      var student = props.student;
+      var academic = props.academic_ml;
+
+      return e("div", null,
+        e("div", { className: "d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2" },
+          e("div", null,
+            e("h3", { className: "mb-1" }, "Student Dashboard"),
+            e("div", { className: "text-muted" }, "Personalized study recommendation and academic progress summary.")
+          ),
+          e("div", { className: "d-flex gap-2 flex-wrap" },
+            e("a", { className: "btn btn-outline-primary", href: "/student/performance/" }, "View Performance"),
+            e("a", { className: "btn btn-primary", href: "/ml/recommend/" }, "Get Recommendation")
+          )
+        ),
+
+        academic ? e("div", { className: "card shadow-sm mb-3" },
+          e("div", { className: "card-body p-4" },
+            e("div", { className: "d-flex justify-content-between align-items-start gap-3 flex-wrap" },
+              e("div", null,
+                e("h5", { className: "mb-1" }, "Academic ML Summary"),
+                e("div", { className: "text-muted small" }, "Computed from your semester/subject performance (explainable clustering).")
+              ),
+              e(Badge, { className: "text-bg-light border text-dark" }, "Subjects: " + (academic.features && academic.features.n_subjects ? academic.features.n_subjects : 0))
+            ),
+            e("div", { className: "d-flex flex-wrap gap-2 mt-2" },
+              e(Badge, { className: "text-bg-secondary" }, "Cluster: " + academic.performance_cluster),
+              e(Badge, { className: "text-bg-primary" }, "Study Level: " + academic.study_level)
+            ),
+            e("pre", { className: "bg-light border rounded p-2 mt-3 mb-0", style: { whiteSpace: "pre-wrap" } }, academic.explanation)
+          )
+        ) : null,
+
+        student ? e("div", { className: "card shadow-sm mb-3" },
+          e("div", { className: "card-body p-4" },
+            e("div", { className: "d-flex justify-content-between align-items-start flex-wrap gap-2" },
+              e("div", null,
+                e("h5", { className: "mb-1" }, "Current Level"),
+                e("div", { className: "fs-4 fw-bold" }, student.level)
+              ),
+              e("div", { className: "text-end" },
+                e(Badge, { className: "text-bg-dark" }, "Avg: " + (Number(student.avg_score || 0).toFixed(1)))
+              )
+            ),
+            props.ml_explanation ? e("div", { className: "text-muted mt-2" }, props.ml_explanation) : null,
+            e("hr", null),
+            e("div", { className: "row g-2" },
+              e("div", { className: "col-md-3" }, e("div", { className: "text-muted small" }, "Math"), e("div", { className: "fw-bold" }, student.math_marks)),
+              e("div", { className: "col-md-3" }, e("div", { className: "text-muted small" }, "Physics"), e("div", { className: "fw-bold" }, student.physics_marks)),
+              e("div", { className: "col-md-3" }, e("div", { className: "text-muted small" }, "Computer Science"), e("div", { className: "fw-bold" }, student.cs_marks)),
+              e("div", { className: "col-md-3" }, e("div", { className: "text-muted small" }, "Average"), e("div", { className: "fw-bold" }, Number(student.avg_score || 0).toFixed(1)))
+            )
+          )
+        ) : e("div", { className: "alert alert-info" },
+          "No previous recommendation found. Click ",
+          e("strong", null, "Get Recommendation"),
+          " to start."
+        ),
+
+        e("div", { className: "card shadow-sm" },
+          e("div", { className: "card-body p-4" },
+            e("h5", { className: "mb-3" }, "Recent History (Last 5)"),
+            props.history && props.history.length ? (
+              e("div", { className: "table-responsive" },
+                e("table", { className: "table table-sm table-bordered align-middle mb-0" },
+                  e("thead", { className: "table-light" },
+                    e("tr", null,
+                      e("th", null, "Date"),
+                      e("th", null, "Math"),
+                      e("th", null, "Physics"),
+                      e("th", null, "CS"),
+                      e("th", null, "Average"),
+                      e("th", null, "Level")
+                    )
+                  ),
+                  e("tbody", null,
+                    props.history.slice(0, 5).map(function (it, idx) {
+                      return e("tr", { key: idx },
+                        e("td", null, it.created_at),
+                        e("td", null, it.math_marks),
+                        e("td", null, it.physics_marks),
+                        e("td", null, it.cs_marks),
+                        e("td", null, it.avg_score),
+                        e("td", null, e(Badge, { className: "text-bg-secondary" }, it.level))
+                      );
+                    })
+                  )
+                )
+              )
+            ) : e("div", { className: "text-muted" }, "No history yet.")
+          )
+        )
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("student-dashboard-root")).render(e(StudentDashboard));
+  })();
+</script>
+{% endblock %}
+

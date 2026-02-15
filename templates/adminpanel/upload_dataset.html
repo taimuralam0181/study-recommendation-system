@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Dataset Upload | Teacher Panel{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h3 class="mb-0">Dataset Upload and Training</h3>
+  <a class="btn btn-outline-secondary" href="{% url 'teacher_dashboard' %}">Back to Dashboard</a>
+</div>
+
+{% if error %}
+  <div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+{% if success %}
+  <div class="alert alert-success">{{ success }}</div>
+{% endif %}
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5>Upload New Dataset</h5>
+        <p class="text-muted small mb-3">
+          Required columns:
+          <code>student_id, semester, subject, assignment_marks, quiz_marks, attendance_percentage, midterm_marks, previous_cgpa, final_marks, final_grade</code>
+        </p>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">CSV / Excel File</label>
+            {{ form.file }}
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" name="clear_existing" id="clear_existing" checked>
+            <label class="form-check-label" for="clear_existing">
+              Replace existing dataset rows before import
+            </label>
+          </div>
+          <button class="btn btn-primary w-100" type="submit">Validate, Import, and Train</button>
+        </form>
+      </div>
+    </div>
+
+    {% if train_result %}
+      <div class="card shadow-sm mt-3">
+        <div class="card-body">
+          <h5 class="mb-3">Latest Evaluation</h5>
+          <div class="small text-muted">Regression (Final Marks)</div>
+          <div class="mb-2">
+            <span class="badge text-bg-primary">{{ train_result.regression.algorithm }}</span>
+            <span class="ms-2">RMSE: <strong>{{ train_result.regression.rmse|floatformat:4 }}</strong></span>
+            <span class="ms-2">MAE: <strong>{{ train_result.regression.mae|floatformat:4 }}</strong></span>
+          </div>
+          <div class="small text-muted">Classification (Final Grade)</div>
+          <div>
+            <span class="badge text-bg-success">{{ train_result.classification.algorithm }}</span>
+            <span class="ms-2">Accuracy: <strong>{{ train_result.classification.accuracy|floatformat:4 }}</strong></span>
+            <span class="ms-2">F1: <strong>{{ train_result.classification.f1_weighted|floatformat:4 }}</strong></span>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5>Upload History</h5>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Uploaded By</th>
+                <th>When</th>
+                <th>Status</th>
+                <th>Error</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in uploads %}
+                <tr>
+                  <td>{{ item.id }}</td>
+                  <td>{{ item.uploaded_by.username }}</td>
+                  <td>{{ item.uploaded_at|date:"Y-m-d H:i" }}</td>
+                  <td>
+                    {% if item.train_status == "success" %}
+                      <span class="badge text-bg-success">{{ item.train_status }}</span>
+                    {% elif item.train_status == "failed" %}
+                      <span class="badge text-bg-danger">{{ item.train_status }}</span>
+                    {% elif item.train_status == "running" %}
+                      <span class="badge text-bg-warning">{{ item.train_status }}</span>
+                    {% else %}
+                      <span class="badge text-bg-secondary">{{ item.train_status }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="small text-danger">{{ item.error_message|default:"-" }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="text-muted">No uploads yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5>Model Versions</h5>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>Algorithm</th>
+                <th>Version</th>
+                <th>Metrics</th>
+                <th>Artifact</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for model in trained_models %}
+                <tr>
+                  <td>{{ model.task_type }}</td>
+                  <td>{{ model.algorithm }}</td>
+                  <td>{{ model.version }}</td>
+                  <td class="small">
+                    {% if model.task_type == "regression" %}
+                      RMSE: {{ model.metrics.rmse|default:"-"|floatformat:4 }},
+                      MAE: {{ model.metrics.mae|default:"-"|floatformat:4 }}
+                    {% else %}
+                      Accuracy: {{ model.metrics.accuracy|default:"-"|floatformat:4 }},
+                      F1: {{ model.metrics.f1_weighted|default:"-"|floatformat:4 }}
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a class="btn btn-sm btn-outline-primary" href="{% url 'download_model_version' model.id %}">
+                      Download
+                    </a>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="text-muted">No trained model versions available.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5>At-Risk Students</h5>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Semester</th>
+                <th>Subject</th>
+                <th>Fail Risk</th>
+                <th>Predicted Grade</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in at_risk_students %}
+                <tr>
+                  <td>{{ row.user.username }}</td>
+                  <td>{{ row.semester.number }}</td>
+                  <td>{{ row.subject.name }}</td>
+                  <td><span class="badge text-bg-danger">{{ row.prob_fail|floatformat:2 }}</span></td>
+                  <td>{{ row.predicted_grade|default:"-" }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="text-muted">No at-risk students detected from current predictions.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

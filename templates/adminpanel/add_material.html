@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Add Material | Teacher Panel{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h3 class="mb-0">Add Study Material</h3>
+      <a class="btn btn-outline-secondary" href="{% url 'material_list' %}">Back</a>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Subject</label>
+            <input class="form-control" type="text" name="subject" placeholder="e.g., Math" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Semester</label>
+            <input class="form-control" type="number" name="semester" min="1" max="8" value="1" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Level</label>
+            <select class="form-select" name="level" required>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input class="form-control" type="text" name="title" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description" rows="4" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Course/PDF Link (optional)</label>
+            <input class="form-control" type="url" name="link" placeholder="https://...">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Source (optional)</label>
+            <select class="form-select" name="source">
+              <option value="">-- Select --</option>
+              <option value="MIT OCW">MIT OCW</option>
+              <option value="NPTEL">NPTEL</option>
+              <option value="Stanford">Stanford</option>
+              <option value="MDN">MDN</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary" type="submit">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == 'edit' %}Edit{% else %}Add{% endif %} Subject | Teacher Panel{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h3 class="mb-0">{% if mode == 'edit' %}Edit{% else %}Add{% endif %} Subject</h3>
+      <a class="btn btn-outline-secondary" href="{% url 'teacher_subjects' %}">Back</a>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Semester</label>
+            <select class="form-select" name="semester_id" required>
+              <option value="">-- Select --</option>
+              {% for s in semesters %}
+                {% if form.semester_id %}
+                  {% with selected=form.semester_id %}
+                    <option value="{{ s.id }}" {% if selected|stringformat:"s" == s.id|stringformat:"s" %}selected{% endif %}>
+                      Semester {{ s.number }}
+                    </option>
+                  {% endwith %}
+                {% else %}
+                  <option value="{{ s.id }}" {% if subject and subject.semester_id == s.id %}selected{% endif %}>
+                    Semester {{ s.number }}
+                  </option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Subject Name</label>
+            <input class="form-control" type="text" name="name" value="{% if form.name %}{{ form.name }}{% elif subject %}{{ subject.name }}{% endif %}" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Department</label>
+            <input class="form-control" type="text" name="department" value="{% if form.department %}{{ form.department }}{% elif subject %}{{ subject.department }}{% else %}CSE{% endif %}">
+          </div>
+
+          {% if mode == 'edit' %}
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if subject and subject.is_active %}checked{% endif %}>
+              <label class="form-check-label" for="is_active">Active</label>
+            </div>
+          {% endif %}
+
+          <button class="btn btn-primary" type="submit">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

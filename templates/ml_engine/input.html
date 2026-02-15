@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Student Prediction | Study Recommender{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3 class="mb-0">Personalized Study Prediction</h3>
+      <a class="btn btn-outline-secondary" href="{% url 'student_dashboard' %}">Back to Dashboard</a>
+    </div>
+
+    {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <p class="text-muted">
+          Enter your current semester performance. The system predicts final marks, grade probabilities,
+          weak-signal indicators, and study-plan links.
+        </p>
+        <form method="post">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label">Semester</label>
+              <input class="form-control" type="number" name="semester" min="1" max="8" required
+                     value="{{ form.semester|default:'1' }}">
+            </div>
+            <div class="col-md-9">
+              <label class="form-label">Subject</label>
+              <select class="form-select" name="subject_id" required>
+                <option value="">Select Subject</option>
+                {% for s in subjects %}
+                  <option value="{{ s.id }}" {% if form.subject_id == s.id|stringformat:'s' %}selected{% endif %}>
+                    S{{ s.semester.number }} - {{ s.name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Assignment (0-5)</label>
+              <input class="form-control" type="number" step="0.01" min="0" max="5" required
+                     name="assignment_marks" value="{{ form.assignment_marks|default:'' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Quiz (0-10)</label>
+              <input class="form-control" type="number" step="0.01" min="0" max="10" required
+                     name="quiz_marks" value="{{ form.quiz_marks|default:'' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Midterm (0-30)</label>
+              <input class="form-control" type="number" step="0.01" min="0" max="30" required
+                     name="midterm_marks" value="{{ form.midterm_marks|default:'' }}">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Attendance %</label>
+              <input class="form-control" type="number" step="0.01" min="0" max="100" required
+                     name="attendance_percentage" value="{{ form.attendance_percentage|default:'' }}">
+            </div>
+          </div>
+          <button class="btn btn-primary mt-3" type="submit">Predict Outcome</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

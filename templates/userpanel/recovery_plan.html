@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Recovery Plan | {{ subject.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h3 class="mb-1">Recovery Plan</h3>
+    <div class="text-muted">Semester {{ semester.number }} - {{ subject.name }}</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'semester_detail' semester.number %}">Back</a>
+    <a class="btn btn-outline-primary" href="{% url 'enter_subject_marks' semester.number subject.id %}">Edit Marks</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Current Breakdown (Total = 100)</h5>
+        <div class="row">
+          <div class="col-6"><div class="text-muted small">Assignment (5)</div><div class="fw-bold">{{ perf.hand_marks }}</div></div>
+          <div class="col-6">
+            <div class="text-muted small">Attendance (5, from %)</div>
+            <div class="fw-bold">{{ perf.attendance_marks }} <span class="text-muted small">({{ perf.attendance_percentage|floatformat:0 }}%)</span></div>
+          </div>
+          <div class="col-6 mt-2"><div class="text-muted small">CT (10)</div><div class="fw-bold">{{ perf.ct_marks }}</div></div>
+          <div class="col-6 mt-2"><div class="text-muted small">Midterm (30)</div><div class="fw-bold">{{ perf.midterm_marks }}</div></div>
+          <div class="col-6 mt-2"><div class="text-muted small">Predicted Final (50)</div><div class="fw-bold">{{ perf.final_pred|floatformat:1 }}</div></div>
+          <div class="col-6 mt-2"><div class="text-muted small">Total</div><div class="fw-bold">{{ perf.total }}</div></div>
+        </div>
+
+        <hr>
+        <div class="text-muted small">Pre-final total (H+A+CT+Midterm)</div>
+        <div class="fw-bold">{{ prefinal }}</div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-3">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Required Final (Out of 50)</h5>
+        <div>D (40): <strong>{{ required.d }}</strong></div>
+        <div>C (50): <strong>{{ required.c }}</strong></div>
+        <div>C+ (55): <strong>{{ required.c_plus }}</strong></div>
+        <div>B (60): <strong>{{ required.b }}</strong></div>
+        <div>B+ (65): <strong>{{ required.b_plus }}</strong></div>
+        <div>A- (70): <strong>{{ required.a_minus }}</strong></div>
+        <div>A (75): <strong>{{ required.a }}</strong></div>
+        <div>A+ (80): <strong>{{ required.a_plus }}</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title mb-2">Recommended Target</h5>
+        <div class="fs-4 fw-bold">{{ target.grade }}</div>
+        <div class="text-muted">
+          Required final: <strong>{{ target.required_final }}/50</strong>
+          · Urgency: <strong>{{ urgency }}</strong>
+          · Midterm band: <strong>{{ midterm_band }}</strong>
+        </div>
+
+        {% if explanation %}
+          <div class="alert alert-info mt-3 mb-0">{{ explanation }}</div>
+        {% endif %}
+
+        <div class="mt-3">
+          <div class="text-muted small">Grade probability (from ML classifiers)</div>
+          <div>P(A): <strong>{{ perf.prob_a|floatformat:2 }}</strong></div>
+          <div>P(A+): <strong>{{ perf.prob_aplus|floatformat:2 }}</strong></div>
+          <div>Fail risk: <strong>{{ perf.prob_fail|floatformat:2 }}</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-3">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Final Exam Recovery Plan</h5>
+        <ol class="mb-0">
+          {% for step in plan_steps %}
+            <li class="mb-2">{{ step }}</li>
+          {% endfor %}
+        </ol>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mt-3">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Recommended Study Materials</h5>
+        {% if materials %}
+          <div class="list-group">
+            {% for m in materials %}
+              <div class="list-group-item d-flex justify-content-between align-items-start">
+                <div class="me-2">
+                  <div class="fw-semibold">{{ m.title }}</div>
+                  <div class="small text-muted">{{ m.material_type }}{% if m.description %} - {{ m.description|truncatechars:90 }}{% endif %}</div>
+                </div>
+                {% if m.link %}
+                  <a class="btn btn-sm btn-outline-primary" href="{{ m.link }}" target="_blank" rel="noopener">Open</a>
+                {% elif m.file %}
+                  <a class="btn btn-sm btn-outline-primary" href="{{ m.file.url }}" target="_blank" rel="noopener">Open</a>
+                {% else %}
+                  <span class="badge text-bg-secondary">No Link</span>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-muted">No study materials added yet for this subject. Ask your teacher to upload materials.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

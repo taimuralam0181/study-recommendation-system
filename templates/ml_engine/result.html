@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Prediction Result | Study Recommender{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h3 class="mb-0">Prediction Result</h3>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary" href="{% url 'get_recommendation' %}">Predict Again</a>
+    <a class="btn btn-outline-secondary" href="{% url 'student_dashboard' %}">Dashboard</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-3">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <div class="text-muted small">Subject</div>
+      <div class="fw-bold">S{{ semester }} - {{ subject }}</div>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <div class="text-muted small">Predicted Final (0-50)</div>
+      <div class="fs-4 fw-bold">{{ final_pred|floatformat:2 }}</div>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <div class="text-muted small">Predicted Total (0-100)</div>
+      <div class="fs-4 fw-bold">{{ total_pred|floatformat:2 }}</div>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <div class="text-muted small">Predicted Grade</div>
+      <div class="fs-4 fw-bold">{{ predicted_grade }}</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5>Grade Probabilities</h5>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Grade</th><th>Probability</th></tr></thead>
+            <tbody>
+              {% for grade, prob in grade_probabilities.items %}
+                <tr>
+                  <td>{{ grade }}</td>
+                  <td>{{ prob|floatformat:4 }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="2" class="text-muted">No probability data.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="small text-muted mt-2">
+          Aggregates: P(A or A+)={{ prob_a|floatformat:4 }}, P(A+)={{ prob_aplus|floatformat:4 }}, P(F)={{ prob_fail|floatformat:4 }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5>Required Final by Grade Target</h5>
+        <ul class="mb-0">
+          <li>D: {{ required.d }}</li>
+          <li>C: {{ required.c }}</li>
+          <li>C+: {{ required.c_plus }}</li>
+          <li>B: {{ required.b }}</li>
+          <li>B+: {{ required.b_plus }}</li>
+          <li>A-: {{ required.a_minus }}</li>
+          <li>A: {{ required.a }}</li>
+          <li>A+: {{ required.a_plus }}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5>Weak Subjects</h5>
+        <ul class="mb-0">
+          {% for row in weak_subjects %}
+            <li>
+              S{{ row.semester }} {{ row.subject }} (Total: {{ row.total }}, Grade: {{ row.predicted_grade }})
+              <a class="ms-1" href="{{ row.plan_url }}">Recovery Plan</a>
+            </li>
+          {% empty %}
+            <li class="text-muted">No weak subjects identified from your saved records.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5>Personalized Study Plan Links</h5>
+        <ul class="mb-0">
+          {% for link in personalized_links %}
+            <li><a href="{{ link.url }}" target="_blank" rel="noopener">{{ link.title }}</a></li>
+          {% empty %}
+            <li class="text-muted">No links available yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5>Model Version</h5>
+        <div>Regression: <code>{{ model_versions.regression|default:"-" }}</code></div>
+        <div>Classification: <code>{{ model_versions.classification|default:"-" }}</code></div>
+        <p class="text-muted small mt-2 mb-0">{{ explanation }}</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5>Academic ML Summary</h5>
+        {% if academic_ml %}
+          <div>Cluster: <strong>{{ academic_ml.performance_cluster }}</strong></div>
+          <div>Study Level: <strong>{{ academic_ml.study_level }}</strong></div>
+          <p class="text-muted small mb-0 mt-2">{{ academic_ml.explanation }}</p>
+        {% else %}
+          <p class="text-muted mb-0">No historical data for academic cluster analysis yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

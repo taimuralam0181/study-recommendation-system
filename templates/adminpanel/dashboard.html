@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}Teacher Dashboard | Study Recommender{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h3 class="mb-0">Teacher Dashboard</h3>
+    <p class="text-muted mb-0">Training status, dataset quality, and student-risk monitoring.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary" href="{% url 'upload_dataset' %}">Dataset and Training</a>
+    <a class="btn btn-primary" href="{% url 'teacher_add_material' %}">Add Material</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-3">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <div class="text-muted small">Total Students</div>
+      <div class="fs-3 fw-bold">{{ total_students }}</div>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <div class="text-muted small">Average Overall</div>
+      <div class="fs-3 fw-bold">{{ avg_overall|floatformat:1 }}</div>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <div class="text-muted small">Dataset Rows</div>
+      <div class="fs-3 fw-bold">{{ dataset_rows }}</div>
+    </div></div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <div class="text-muted small">Weakest Subject</div>
+      <div class="fs-3 fw-bold">{{ weakest_subject }}</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5>Upload Status</h5>
+        <ul class="mb-0">
+          <li>Pending: {{ upload_status_counts.pending|default:0 }}</li>
+          <li>Running: {{ upload_status_counts.running|default:0 }}</li>
+          <li>Success: {{ upload_status_counts.success|default:0 }}</li>
+          <li>Failed: {{ upload_status_counts.failed|default:0 }}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5>Level Distribution</h5>
+        <ul class="mb-0">
+          {% for row in level_counts %}
+            <li>{{ row.level }}: {{ row.count }}</li>
+          {% empty %}
+            <li class="text-muted">No student records yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5>Drift Monitoring</h5>
+        {% if latest_monitor_run %}
+          <div class="small text-muted mb-2">Last check: {{ latest_monitor_run.created_at|date:"Y-m-d H:i" }}</div>
+          <div>Overall drift: <strong>{{ latest_monitor_run.metrics.overall_drift|default:"-" }}</strong></div>
+          <div>Invalid ratio: <strong>{{ latest_monitor_run.metrics.invalid_ratio|default:"-" }}</strong></div>
+          <div>Should retrain: <strong>{{ latest_monitor_run.metrics.should_retrain|yesno:"Yes,No" }}</strong></div>
+        {% else %}
+          <div class="text-muted">No monitoring run yet. Run <code>python manage.py monitor_ml_models</code>.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h5>Feedback Loop</h5>
+        {% if latest_feedback_run %}
+          <div class="small text-muted mb-2">Last sync: {{ latest_feedback_run.created_at|date:"Y-m-d H:i" }}</div>
+          <div>Samples: <strong>{{ latest_feedback_run.metrics.sample_count|default:"-" }}</strong></div>
+          <div>Final MAE: <strong>{{ latest_feedback_run.metrics.mae_final|default:"-" }}</strong></div>
+          <div>Grade Accuracy: <strong>{{ latest_feedback_run.metrics.grade_accuracy|default:"-" }}</strong></div>
+        {% else %}
+          <div class="text-muted">No feedback evaluation run yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if ml_alerts %}
+  <div class="alert alert-warning">
+    <strong>ML Alerts:</strong>
+    <ul class="mb-0 mt-2">
+      {% for msg in ml_alerts %}
+        <li>{{ msg }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="mb-3">Latest Model Versions</h5>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>Algorithm</th>
+                <th>Version</th>
+                <th>Metrics</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for model in trained_models %}
+                <tr>
+                  <td>{{ model.task_type }}</td>
+                  <td>{{ model.algorithm }}</td>
+                  <td>{{ model.version }}</td>
+                  <td class="small">
+                    {% if model.task_type == "regression" %}
+                      RMSE: {{ model.metrics.rmse|default:"-"|floatformat:4 }},
+                      MAE: {{ model.metrics.mae|default:"-"|floatformat:4 }}
+                    {% else %}
+                      Accuracy: {{ model.metrics.accuracy|default:"-"|floatformat:4 }},
+                      F1: {{ model.metrics.f1_weighted|default:"-"|floatformat:4 }}
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a class="btn btn-sm btn-outline-primary" href="{% url 'download_model_version' model.id %}">Download</a>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="text-muted">No trained models available.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="mb-3">Recent Dataset Uploads</h5>
+        <ul class="list-group list-group-flush">
+          {% for item in uploads %}
+            <li class="list-group-item px-0">
+              <div class="d-flex justify-content-between">
+                <span>#{{ item.id }} by {{ item.uploaded_by.username }}</span>
+                <span class="badge text-bg-secondary">{{ item.train_status }}</span>
+              </div>
+              <div class="small text-muted">{{ item.uploaded_at|date:"Y-m-d H:i" }}</div>
+            </li>
+          {% empty %}
+            <li class="list-group-item px-0 text-muted">No uploads yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h5>At-Risk Students (Fail risk >= 0.40)</h5>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Semester</th>
+            <th>Subject</th>
+            <th>Fail Risk</th>
+            <th>Predicted Grade</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in at_risk_students %}
+            <tr>
+              <td>{{ row.user.username }}</td>
+              <td>{{ row.semester.number }}</td>
+              <td>{{ row.subject.name }}</td>
+              <td><span class="badge text-bg-danger">{{ row.prob_fail|floatformat:2 }}</span></td>
+              <td>{{ row.predicted_grade|default:"-" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="text-muted">No at-risk students right now.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

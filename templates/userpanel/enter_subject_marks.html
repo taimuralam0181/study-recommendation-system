@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Enter Marks | {{ subject.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div>
+        <h3 class="mb-1">Enter Marks</h3>
+        <div class="text-muted">Semester {{ semester.number }} - {{ subject.name }}</div>
+      </div>
+      <a class="btn btn-outline-secondary" href="{% url 'semester_detail' semester.number %}">Back</a>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Assignment (0-5)</label>
+            <input class="form-control" type="number" name="hand_marks" min="0" max="5"
+                   value="{% if existing %}{{ existing.hand_marks }}{% else %}0{% endif %}" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Attendance Percentage (0-100)</label>
+            <input class="form-control" type="number" name="attendance_percentage" min="0" max="100"
+                   value="{% if attendance_pct is not None %}{{ attendance_pct }}{% else %}0{% endif %}" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Class Test (CT) (0-10)</label>
+            <input class="form-control" type="number" name="ct_marks" min="0" max="10"
+                   value="{% if existing %}{{ existing.ct_marks }}{% else %}0{% endif %}" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Midterm (0-30)</label>
+            <input class="form-control" type="number" name="midterm_marks" min="0" max="30"
+                   value="{% if existing %}{{ existing.midterm_marks }}{% else %}0{% endif %}" required>
+          </div>
+
+          <div class="alert alert-info">
+            Total score is calculated as:
+            <strong>Assignment (5) + Attendance (5, scaled from %) + CT (10) + Midterm (30) + Predicted Final (50)</strong> = 100.
+            This transparency helps in academic evaluation and viva.
+          </div>
+
+          <button class="btn btn-primary" type="submit">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Analytics | Teacher Panel{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h3 class="mb-1">Academic Analytics</h3>
+    <div class="text-muted">Semester trends and weakest subjects (based on average total score).</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'teacher_dashboard' %}">Back</a>
+    <a class="btn btn-outline-primary" href="{% url 'teacher_analytics_export' %}">Export CSV</a>
+  </div>
+</div>
+
+{% if overall_weakest %}
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <h5 class="mb-2">Overall Weakest Subjects (Top 10)</h5>
+      <div class="text-muted small mb-3">Ranked by lowest average total score across all semesters.</div>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Subject</th>
+              <th>Avg Total</th>
+              <th>Samples</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in overall_weakest %}
+              <tr>
+                <td>{{ s.subject__name }}</td>
+                <td>{{ s.avg_total|floatformat:1 }}</td>
+                <td>{{ s.n }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+{% if analytics_rows %}
+  {% for row in analytics_rows %}
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <div class="d-flex align-items-start justify-content-between">
+          <div>
+            <h5 class="mb-1">Semester {{ row.semester }}</h5>
+            <div class="text-muted small">
+              Semester average total: <strong>{{ row.sem_avg|floatformat:1 }}</strong>
+            </div>
+          </div>
+          <div class="text-end">
+            <div class="small text-muted">Distribution (all subjects)</div>
+            <div>
+              <span class="badge text-bg-danger">Weak {{ row.distribution.weak }}</span>
+              <span class="badge text-bg-warning">Average {{ row.distribution.average }}</span>
+              <span class="badge text-bg-success">Strong {{ row.distribution.strong }}</span>
+            </div>
+          </div>
+        </div>
+
+        <hr>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="p-3 border rounded bg-light">
+              <div class="text-muted small">Weakest Subject (min average)</div>
+              {% if row.weakest_subject %}
+                <div class="fw-bold">{{ row.weakest_subject.subject__name }}</div>
+                <div class="text-muted small">Avg: {{ row.weakest_subject.avg_total|floatformat:1 }} (n={{ row.weakest_subject.n }})</div>
+              {% else %}
+                <div class="text-muted">No data</div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3 border rounded bg-light">
+              <div class="text-muted small">Strongest Subject (max average)</div>
+              {% if row.strongest_subject %}
+                <div class="fw-bold">{{ row.strongest_subject.subject__name }}</div>
+                <div class="text-muted small">Avg: {{ row.strongest_subject.avg_total|floatformat:1 }} (n={{ row.strongest_subject.n }})</div>
+              {% else %}
+                <div class="text-muted">No data</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-3 table-responsive">
+          <table class="table table-sm table-bordered align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Subject</th>
+                <th>Avg Total</th>
+                <th>Samples</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in row.subjects %}
+                <tr>
+                  <td>{{ s.subject__name }}</td>
+                  <td>{{ s.avg_total|floatformat:1 }}</td>
+                  <td>{{ s.n }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="alert alert-info">
+    No performance data available yet. Ask students to enter marks, or run the seeder:
+    <code>python manage.py seed_cs_program --students 30</code>
+  </div>
+{% endif %}
+{% endblock %}

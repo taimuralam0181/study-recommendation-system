@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Subjects | Teacher Panel{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h3 class="mb-0">Subjects</h3>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'teacher_dashboard' %}">Back</a>
+    <a class="btn btn-primary" href="{% url 'teacher_add_subject' %}">Add Subject</a>
+  </div>
+</div>
+
+{% if subjects %}
+  <div class="table-responsive">
+    <table class="table table-striped table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Semester</th>
+          <th>Subject</th>
+          <th>Department</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for subject in subjects %}
+          <tr>
+            <td>S{{ subject.semester.number }}</td>
+            <td>{{ subject.name }}</td>
+            <td>{{ subject.department }}</td>
+            <td>
+              {% if subject.is_active %}
+                <span class="badge text-bg-success">Active</span>
+              {% else %}
+                <span class="badge text-bg-secondary">Inactive</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex gap-2">
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'teacher_edit_subject' subject.id %}">Edit</a>
+                {% if subject.is_active %}
+                  <form method="post" action="{% url 'teacher_deactivate_subject' subject.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-danger" type="submit">Deactivate</button>
+                  </form>
+                {% endif %}
+                <form method="post" action="{% url 'teacher_delete_subject' subject.id %}" onsubmit="return confirm('Deleting this subject will remove it permanently along with related records. Continue?');">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-outline-dark" type="submit">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="alert alert-info">No subjects added yet.</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Recovery Plans | Teacher Panel{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h3 class="mb-1">Student Recovery Plans</h3>
+    <div class="text-muted">Select a student and semester to view required-final targets and urgency.</div>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'teacher_dashboard' %}">Back</a>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Students</h5>
+        {% if students %}
+          <div class="list-group">
+            {% for s in students %}
+              <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div><strong>{{ s.user.username }}</strong></div>
+                <div class="text-muted small">Select semester -></div>
+              </div>
+            {% endfor %}
+          </div>
+          <div class="text-muted small mt-2">
+            Tip: Use the semester list on the right after choosing a student.
+          </div>
+        {% else %}
+          <div class="alert alert-warning mb-0">No students found.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Open a Recovery Table</h5>
+        {% if students and semesters %}
+          <form class="row g-2" method="get" action="">
+            <div class="col-md-7">
+              <label class="form-label">Student</label>
+              <select class="form-select" name="student_id" required>
+                {% for s in students %}
+                  <option value="{{ s.user.id }}">{{ s.user.username }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label">Semester</label>
+              <select class="form-select" name="semester" required>
+                {% for sem in semesters %}
+                  <option value="{{ sem.number }}">Semester {{ sem.number }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <button class="btn btn-primary" type="submit">Open</button>
+            </div>
+          </form>
+
+          {% if request.GET.student_id and request.GET.semester %}
+            <div class="mt-3">
+              <a class="btn btn-outline-primary"
+                 href="{% url 'teacher_recovery_student_semester' request.GET.student_id request.GET.semester %}">
+                Go to Selected Recovery Table
+              </a>
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="alert alert-info mb-0">No semesters/students configured yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+

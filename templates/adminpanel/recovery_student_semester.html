@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Recovery | {{ student_user.username }} S{{ semester.number }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h3 class="mb-1">Recovery Table</h3>
+    <div class="text-muted">{{ student_user.username }} - Semester {{ semester.number }}</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'teacher_recovery_overview' %}">Back</a>
+    <a class="btn btn-outline-primary" href="{% url 'teacher_recovery_export' student_user.id semester.number %}">Export CSV</a>
+  </div>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-striped table-bordered align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Subject</th>
+        <th>Total</th>
+        <th>Pre-final</th>
+        <th>Req (D)</th>
+        <th>Req (C)</th>
+        <th>Req (C+)</th>
+        <th>Req (B)</th>
+        <th>Req (B+)</th>
+        <th>Req (A-)</th>
+        <th>Req (A)</th>
+        <th>Req (A+)</th>
+        <th>Best Target</th>
+        <th>Req (Target)</th>
+        <th>Urgency</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+        <tr>
+          <td>{{ r.subject.name }}</td>
+          {% if r.has_data %}
+            <td>{{ r.perf.total }}</td>
+            <td>{{ r.prefinal }}</td>
+            <td>{{ r.required.d }}</td>
+            <td>{{ r.required.c }}</td>
+            <td>{{ r.required.c_plus }}</td>
+            <td>{{ r.required.b }}</td>
+            <td>{{ r.required.b_plus }}</td>
+            <td>{{ r.required.a_minus }}</td>
+            <td>{{ r.required.a }}</td>
+            <td>{{ r.required.a_plus }}</td>
+            <td><span class="badge text-bg-primary">{{ r.target.grade }}</span></td>
+            <td><strong>{{ r.target.required_final }}</strong>/50</td>
+            <td>
+              {% if r.urgency == 'High' %}
+                <span class="badge text-bg-danger">High</span>
+              {% elif r.urgency == 'Medium' %}
+                <span class="badge text-bg-warning">Medium</span>
+              {% else %}
+                <span class="badge text-bg-success">Low</span>
+              {% endif %}
+            </td>
+          {% else %}
+            <td colspan="9" class="text-muted">No marks entered</td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card shadow-sm mt-3">
+  <div class="card-body">
+    <h5 class="card-title mb-2">Interpretation Notes (Academic)</h5>
+    <ul class="mb-0">
+      <li>Pre-final = Assignment + Attendance + CT + Midterm (maximum 50).</li>
+      <li>Required final is computed as: max(0, cutoff - pre-final), where final maximum is 50.</li>
+      <li>Best Target is the highest grade whose cutoff is reachable given final constraints.</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}
+

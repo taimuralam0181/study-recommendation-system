@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == 'edit' %}Edit{% else %}Add{% endif %} Material | Teacher Panel{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h3 class="mb-0">{% if mode == 'edit' %}Edit{% else %}Add{% endif %} Study Material</h3>
+      <a class="btn btn-outline-secondary" href="{% url 'material_list' %}">Back</a>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Subject</label>
+            <select class="form-select" name="subject_id" required>
+              <option value="">-- Select --</option>
+              {% for s in subjects %}
+                {% if form.subject_id %}
+                  {% with selected=form.subject_id %}
+                    <option value="{{ s.id }}" {% if selected|stringformat:"s" == s.id|stringformat:"s" %}selected{% endif %}>
+                      S{{ s.semester.number }} - {{ s.name }}
+                    </option>
+                  {% endwith %}
+                {% else %}
+                  <option value="{{ s.id }}" {% if material and material.subject_id == s.id %}selected{% endif %}>
+                    S{{ s.semester.number }} - {{ s.name }}
+                  </option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input class="form-control" type="text" name="title" value="{% if form.title %}{{ form.title }}{% elif material %}{{ material.title }}{% endif %}" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description" rows="4" required>{% if form.description %}{{ form.description }}{% elif material %}{{ material.description }}{% endif %}</textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Material Type</label>
+            <select class="form-select" name="material_type" required>
+              {% if form.material_type %}
+                {% with selected=form.material_type %}
+                  <option value="PDF" {% if selected == "PDF" %}selected{% endif %}>PDF</option>
+                  <option value="Image" {% if selected == "Image" %}selected{% endif %}>Image</option>
+                  <option value="Link" {% if selected == "Link" %}selected{% endif %}>Link</option>
+                {% endwith %}
+              {% else %}
+                <option value="PDF" {% if material and material.material_type == "PDF" %}selected{% endif %}>PDF</option>
+                <option value="Image" {% if material and material.material_type == "Image" %}selected{% endif %}>Image</option>
+                <option value="Link" {% if material and material.material_type == "Link" %}selected{% endif %}>Link</option>
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Upload File (PDF/Image)</label>
+            {% if material and material.file %}
+              <div class="small mb-2">
+                Current: <a href="{{ material.file.url }}" target="_blank" rel="noopener">Open file</a>
+              </div>
+            {% endif %}
+            <input class="form-control" type="file" name="file">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Link (for Link type)</label>
+            <input class="form-control" type="url" name="link" value="{% if form.link %}{{ form.link }}{% elif material %}{{ material.link }}{% endif %}" placeholder="https://...">
+          </div>
+
+          <button class="btn btn-primary" type="submit">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
