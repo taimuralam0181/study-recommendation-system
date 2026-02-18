@@ -51,6 +51,9 @@ def register_view(request):
 
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
+        first_name = request.POST.get("first_name", "").strip()
+        last_name = request.POST.get("last_name", "").strip()
+        email = request.POST.get("email", "").strip()
         password = request.POST.get("password", "")
         confirm = request.POST.get("confirm_password", "")
         role = request.POST.get("role", "student")
@@ -63,10 +66,18 @@ def register_view(request):
             return render(request, "accounts/register.html", {"error": "Passwords do not match."})
         if User.objects.filter(username=username).exists():
             return render(request, "accounts/register.html", {"error": "Username already exists."})
+        if email and User.objects.filter(email__iexact=email).exists():
+            return render(request, "accounts/register.html", {"error": "Email already exists."})
 
         role_clean = role if role in ["teacher", "student"] else "student"
 
-        user = User.objects.create_user(username=username, password=password)
+        user = User.objects.create_user(
+            username=username,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+        )
         UserProfile.objects.create(user=user, role=role_clean)
 
         # ML inference uses previous CGPA; keep a Student row for student accounts.

@@ -1,181 +1,539 @@
 {% extends "base.html" %}
 {% block title %}Register | Study Recommender{% endblock %}
+{% block show_navbar %}{% endblock %}
 
 {% block content %}
-<div id="django-csrf" style="display:none">{% csrf_token %}</div>
-<div id="auth-root"></div>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap");
 
-<script>
-  window.__AUTH_REGISTER_PROPS__ = {
-    error: "{{ error|default:''|escapejs }}"
-  };
-</script>
+  .register-shell {
+    min-height: calc(100vh - 190px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1rem, 2.6vw, 2rem) 0;
+    font-family: "Space Grotesk", sans-serif;
+  }
 
-<!-- React (CDN) -->
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  .register-frame {
+    position: relative;
+    width: min(1100px, 100%);
+    border-radius: 26px;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(33, 208, 255, 0.22), transparent 42%),
+      radial-gradient(circle at 100% 100%, rgba(255, 20, 147, 0.35), transparent 44%),
+      linear-gradient(135deg, #06144c 0%, #2f0a5e 48%, #88014f 100%);
+    padding: clamp(1rem, 1.8vw, 1.5rem);
+    box-shadow: 0 26px 65px rgba(10, 0, 22, 0.55);
+    overflow: hidden;
+  }
+
+  .register-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(290px, 1fr) minmax(360px, 1.35fr);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 20px;
+    overflow: hidden;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.2), rgba(30, 5, 52, 0.28));
+  }
+
+  .register-promo {
+    padding: clamp(1.4rem, 2.5vw, 2.1rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .promo-card {
+    width: 100%;
+    max-width: 390px;
+    min-height: 460px;
+    border-radius: 44px;
+    padding: 1.6rem;
+    color: #eef2ff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.2rem;
+    background: linear-gradient(160deg, rgba(189, 46, 206, 0.72), rgba(64, 8, 93, 0.94));
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+
+  .promo-avatar {
+    width: 92px;
+    height: 92px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.75);
+    display: grid;
+    place-items: center;
+    background: rgba(8, 1, 30, 0.3);
+  }
+
+  .promo-avatar svg {
+    width: 56px;
+    height: 56px;
+    color: #f5f7ff;
+  }
+
+  .promo-card h2 {
+    margin: 0;
+    line-height: 1.08;
+    font-size: clamp(1.95rem, 3vw, 3rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .register-panel {
+    padding: clamp(1.3rem, 2.1vw, 2rem);
+    color: #f4f8ff;
+    background: linear-gradient(160deg, rgba(24, 5, 55, 0.7), rgba(75, 0, 59, 0.38));
+  }
+
+  .register-heading {
+    margin-bottom: 1rem;
+  }
+
+  .register-heading h3 {
+    margin: 0;
+    color: #4ae5ff;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  .register-heading p {
+    margin: 0.35rem 0 0;
+    color: rgba(230, 234, 255, 0.78);
+    font-size: 0.92rem;
+  }
+
+  .register-alert {
+    margin: 0 0 0.95rem;
+    border: 1px solid rgba(255, 112, 112, 0.5);
+    border-radius: 10px;
+    background: rgba(128, 3, 42, 0.35);
+    color: #ffd8e0;
+    padding: 0.58rem 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .register-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem 0.7rem;
+  }
+
+  .field-full {
+    grid-column: 1 / -1;
+  }
+
+  .field-label {
+    display: block;
+    font-size: 0.79rem;
+    color: rgba(238, 242, 255, 0.82);
+    margin-bottom: 0.28rem;
+    letter-spacing: 0.01em;
+  }
+
+  .field-control,
+  .field-control:focus {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid rgba(240, 243, 255, 0.38);
+    background: rgba(255, 255, 255, 0.95);
+    color: #1d2044;
+    font-size: 0.95rem;
+    outline: none;
+    box-shadow: none;
+    padding: 0.48rem 0.58rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .field-control:focus {
+    border-color: #3be0ff;
+    box-shadow: 0 0 0 3px rgba(52, 223, 255, 0.2);
+  }
+
+  .password-box {
+    position: relative;
+  }
+
+  .password-toggle {
+    position: absolute;
+    right: 0.42rem;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: #2e356f;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 0.2rem;
+    cursor: pointer;
+  }
+
+  .role-switch {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 0.2rem;
+  }
+
+  .role-chip {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .role-chip input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .role-chip span {
+    display: inline-block;
+    border-radius: 999px;
+    border: 1px solid rgba(231, 240, 255, 0.58);
+    color: #f4f8ff;
+    padding: 0.37rem 0.85rem;
+    font-size: 0.81rem;
+    transition: all 0.25s ease;
+  }
+
+  .role-chip input:checked + span {
+    border-color: rgba(62, 233, 255, 0.95);
+    color: #031f2d;
+    background: linear-gradient(90deg, #3ee9ff, #79fff2);
+    box-shadow: 0 0 14px rgba(70, 236, 255, 0.45);
+  }
+
+  .policy-note {
+    margin-top: 0.35rem;
+    font-size: 0.72rem;
+    color: rgba(225, 232, 255, 0.75);
+  }
+
+  .register-btn {
+    margin-top: 0.85rem;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ff22b6, #fb59db);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 0.55rem 1.3rem;
+    letter-spacing: 0.02em;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  }
+
+  .register-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 22px rgba(255, 48, 189, 0.38);
+  }
+
+  .register-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .password-error {
+    grid-column: 1 / -1;
+    margin: 0.15rem 0 0;
+    font-size: 0.8rem;
+    color: #ffcad9;
+    min-height: 1rem;
+  }
+
+  .face-enroll {
+    border: 1px solid rgba(120, 231, 255, 0.38);
+    border-radius: 12px;
+    padding: 0.62rem;
+    background: rgba(14, 25, 64, 0.42);
+    margin-top: 0.2rem;
+  }
+
+  .face-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .face-status {
+    font-size: 0.75rem;
+    border-radius: 999px;
+    padding: 0.14rem 0.5rem;
+    border: 1px solid rgba(234, 241, 255, 0.38);
+    color: rgba(235, 239, 255, 0.88);
+  }
+
+  .face-status.success {
+    border-color: rgba(89, 255, 184, 0.62);
+    color: #92ffe4;
+  }
+
+  .face-status.error {
+    border-color: rgba(255, 121, 145, 0.62);
+    color: #ffc9d4;
+  }
+
+  .face-video {
+    width: 100%;
+    max-width: 230px;
+    aspect-ratio: 4 / 3;
+    border-radius: 10px;
+    border: 1px solid rgba(239, 243, 255, 0.36);
+    background: rgba(2, 5, 16, 0.72);
+    object-fit: cover;
+    display: block;
+  }
+
+  .face-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.38rem;
+    margin-top: 0.45rem;
+  }
+
+  .face-device-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.38rem;
+    margin-top: 0.45rem;
+  }
+
+  .face-select {
+    min-width: 190px;
+    max-width: 260px;
+    border-radius: 999px;
+    border: 1px solid rgba(230, 237, 255, 0.36);
+    background: rgba(240, 246, 255, 0.14);
+    color: #f4f8ff;
+    padding: 0.28rem 0.7rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    outline: none;
+  }
+
+  .face-select option {
+    color: #1f2550;
+  }
+
+  .face-btn {
+    border-radius: 999px;
+    border: 1px solid rgba(230, 237, 255, 0.36);
+    background: rgba(240, 246, 255, 0.14);
+    color: #f4f8ff;
+    padding: 0.28rem 0.7rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+
+  .face-btn:hover:not(:disabled) {
+    background: rgba(240, 246, 255, 0.22);
+  }
+
+  .face-btn:disabled {
+    opacity: 0.45;
+  }
+
+  .face-upload-input {
+    display: none;
+  }
+
+  .face-note {
+    margin: 0.42rem 0 0;
+    font-size: 0.72rem;
+    color: rgba(219, 228, 255, 0.8);
+  }
+
+  .register-foot {
+    margin-top: 0.55rem;
+    color: rgba(232, 236, 255, 0.82);
+    font-size: 0.86rem;
+  }
+
+  .register-foot a {
+    color: #76f5ff;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .register-foot a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 991px) {
+    .register-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .promo-card {
+      max-width: 100%;
+      min-height: 230px;
+      border-radius: 26px;
+    }
+  }
+
+  @media (max-width: 575px) {
+    .register-shell {
+      min-height: auto;
+    }
+
+    .register-frame {
+      border-radius: 16px;
+      padding: 0.65rem;
+    }
+
+    .register-grid {
+      border-radius: 12px;
+    }
+
+    .register-fields {
+      grid-template-columns: 1fr;
+      gap: 0.6rem;
+    }
+  }
+</style>
+
+<section class="register-shell">
+  <div class="register-frame">
+    <div class="register-grid">
+      <aside class="register-promo">
+        <div class="promo-card">
+          <div class="promo-avatar" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="8.2" r="3.5" stroke="currentColor" stroke-width="1.6"></circle>
+              <path d="M5 19.2c0-3.4 2.9-5.4 7-5.4s7 2 7 5.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+            </svg>
+          </div>
+          <h2>Let's Make<br>It Happen<br>Together!</h2>
+        </div>
+      </aside>
+
+      <section class="register-panel">
+        <div class="register-heading">
+          <h3>Create An Account</h3>
+          <p>Set up your profile and start getting personalized study insights.</p>
+        </div>
+
+        {% if error %}
+          <div class="register-alert">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" id="registerForm" novalidate>
+          {% csrf_token %}
+          <div class="register-fields">
+            <div class="field-full">
+              <label class="field-label" for="id_username">Username</label>
+              <input class="field-control" id="id_username" type="text" name="username" value="{{ request.POST.username|default:'' }}" required autocomplete="username">
+            </div>
+
+            <div>
+              <label class="field-label" for="id_first_name">First Name</label>
+              <input class="field-control" id="id_first_name" type="text" name="first_name" value="{{ request.POST.first_name|default:'' }}" autocomplete="given-name">
+            </div>
+
+            <div>
+              <label class="field-label" for="id_last_name">Last Name</label>
+              <input class="field-control" id="id_last_name" type="text" name="last_name" value="{{ request.POST.last_name|default:'' }}" autocomplete="family-name">
+            </div>
+
+            <div>
+              <label class="field-label" for="id_email">Email</label>
+              <input class="field-control" id="id_email" type="email" name="email" value="{{ request.POST.email|default:'' }}" autocomplete="email">
+            </div>
+
+            <div>
+              <label class="field-label" for="id_department">Department</label>
+              <input class="field-control" id="id_department" type="text" name="department" value="{{ request.POST.department|default:'' }}" placeholder="CSE / EEE / BBA">
+            </div>
+
+            <div>
+              <label class="field-label" for="id_password">Create Password</label>
+              <div class="password-box">
+                <input class="field-control" id="id_password" type="password" name="password" required autocomplete="new-password">
+                <button class="password-toggle" type="button" data-target="id_password">SHOW</button>
+              </div>
+            </div>
+
+            <div>
+              <label class="field-label" for="id_confirm_password">Confirm Password</label>
+              <div class="password-box">
+                <input class="field-control" id="id_confirm_password" type="password" name="confirm_password" required autocomplete="new-password">
+                <button class="password-toggle" type="button" data-target="id_confirm_password">SHOW</button>
+              </div>
+            </div>
+
+            <div class="role-switch">
+              <span class="field-label mb-0">Account Type</span>
+              <label class="role-chip">
+                <input type="radio" name="role" value="student" {% if request.POST.role|default:'student' == 'student' %}checked{% endif %}>
+                <span>Student</span>
+              </label>
+              <label class="role-chip">
+                <input type="radio" name="role" value="teacher" {% if request.POST.role == 'teacher' %}checked{% endif %}>
+                <span>Teacher</span>
+              </label>
+            </div>
+
+            <p class="policy-note">Creating your account means you agree to our basic usage terms and privacy policy.</p>
+            <div class="password-error" id="passwordError"></div>
+          </div>
+
+          <button class="register-btn" id="registerSubmit" type="submit">Create Account</button>
+        </form>
+
+        <div class="register-foot">
+          Already have an account? <a href="{% url 'login' %}">Sign in</a>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
 
 <script>
   (function () {
-    function getCookie(name) {
-      var cookieValue = null;
-      if (document.cookie && document.cookie !== "") {
-        var cookies = document.cookie.split(";");
-        for (var i = 0; i < cookies.length; i++) {
-          var cookie = cookies[i].trim();
-          if (cookie.substring(0, name.length + 1) === (name + "=")) {
-            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
-          }
-        }
+    var passwordInput = document.getElementById("id_password");
+    var confirmInput = document.getElementById("id_confirm_password");
+    var submitButton = document.getElementById("registerSubmit");
+    var passwordError = document.getElementById("passwordError");
+
+    function validatePasswords() {
+      var password = passwordInput.value || "";
+      var confirm = confirmInput.value || "";
+      var error = "";
+
+      if (password && password.length < 6) {
+        error = "Password must contain at least 6 characters.";
+      } else if (password && confirm && password !== confirm) {
+        error = "Passwords do not match.";
       }
-      return cookieValue;
+
+      passwordError.textContent = error;
+      submitButton.disabled = !!error;
     }
 
-    var e = React.createElement;
-    var props = window.__AUTH_REGISTER_PROPS__ || {};
-    var csrfToken = (function () {
-      var el = document.querySelector("#django-csrf input[name=csrfmiddlewaretoken]");
-      return (el && el.value) ? el.value : (getCookie("csrftoken") || "");
-    })();
-
-    function RegisterApp() {
-      var _a = React.useState("student"), role = _a[0], setRole = _a[1];
-      var _b = React.useState(false), showPw = _b[0], setShowPw = _b[1];
-      var _c = React.useState(false), showConfirm = _c[0], setShowConfirm = _c[1];
-      var _d = React.useState(""), pw = _d[0], setPw = _d[1];
-      var _e = React.useState(""), confirm = _e[0], setConfirm = _e[1];
-
-      var pwMismatch = pw && confirm && pw !== confirm;
-      var pwShort = pw && pw.length < 6;
-
-      return e("div", { className: "row justify-content-center g-4 align-items-stretch" },
-        e("div", { className: "col-lg-6" },
-          e("div", { className: "card shadow-sm h-100" },
-            e("div", { className: "card-body p-4" },
-              e("div", { className: "d-flex justify-content-between align-items-start gap-3" },
-                e("div", null,
-                  e("h3", { className: "mb-1" }, "Register"),
-                  e("div", { className: "text-muted" }, "Create an account and select your role (Teacher / Student).")
-                ),
-                e("span", { className: "badge text-bg-success align-self-start" }, "New Account")
-              ),
-
-              props.error ? e("div", { className: "alert alert-danger mt-3 mb-0" }, props.error) : null,
-
-              e("form", { method: "post", className: "mt-3" },
-                e("input", { type: "hidden", name: "csrfmiddlewaretoken", value: csrfToken }),
-
-                e("div", { className: "mb-3" },
-                  e("label", { className: "form-label", htmlFor: "username" }, "Username"),
-                  e("input", { className: "form-control", id: "username", type: "text", name: "username", autoComplete: "username", required: true })
-                ),
-
-                e("div", { className: "row g-3" },
-                  e("div", { className: "col-md-6" },
-                    e("label", { className: "form-label", htmlFor: "password" }, "Password"),
-                    e("div", { className: "input-group" },
-                      e("input", {
-                        className: "form-control",
-                        id: "password",
-                        type: showPw ? "text" : "password",
-                        name: "password",
-                        value: pw,
-                        onChange: function (ev) { setPw(ev.target.value); },
-                        autoComplete: "new-password",
-                        required: true
-                      }),
-                      e("button", { className: "btn btn-outline-secondary", type: "button", onClick: function () { setShowPw(!showPw); } }, showPw ? "Hide" : "Show")
-                    ),
-                    e("div", { className: "form-text" }, "Minimum 6 characters."),
-                    pwShort ? e("div", { className: "text-danger small" }, "Password is too short.") : null
-                  ),
-                  e("div", { className: "col-md-6" },
-                    e("label", { className: "form-label", htmlFor: "confirm_password" }, "Confirm Password"),
-                    e("div", { className: "input-group" },
-                      e("input", {
-                        className: "form-control",
-                        id: "confirm_password",
-                        type: showConfirm ? "text" : "password",
-                        name: "confirm_password",
-                        value: confirm,
-                        onChange: function (ev) { setConfirm(ev.target.value); },
-                        autoComplete: "new-password",
-                        required: true
-                      }),
-                      e("button", { className: "btn btn-outline-secondary", type: "button", onClick: function () { setShowConfirm(!showConfirm); } }, showConfirm ? "Hide" : "Show")
-                    ),
-                    pwMismatch ? e("div", { className: "text-danger small mt-1" }, "Passwords do not match.") : null
-                  )
-                ),
-
-                e("div", { className: "mt-3" },
-                  e("div", { className: "d-flex justify-content-between align-items-center" },
-                    e("label", { className: "form-label mb-0" }, "Role"),
-                    e("span", { className: "badge text-bg-light border text-dark" }, role === "teacher" ? "Teacher" : "Student")
-                  ),
-                  e("div", { className: "d-flex gap-3 flex-wrap mt-2" },
-                    e("div", { className: "form-check" },
-                      e("input", {
-                        className: "form-check-input",
-                        type: "radio",
-                        name: "role",
-                        id: "role_student",
-                        value: "student",
-                        checked: role === "student",
-                        onChange: function () { setRole("student"); }
-                      }),
-                      e("label", { className: "form-check-label", htmlFor: "role_student" }, "Student")
-                    ),
-                    e("div", { className: "form-check" },
-                      e("input", {
-                        className: "form-check-input",
-                        type: "radio",
-                        name: "role",
-                        id: "role_teacher",
-                        value: "teacher",
-                        checked: role === "teacher",
-                        onChange: function () { setRole("teacher"); }
-                      }),
-                      e("label", { className: "form-check-label", htmlFor: "role_teacher" }, "Teacher")
-                    )
-                  ),
-                  e("div", { className: "form-text" }, "Role controls dashboard access and available features.")
-                ),
-
-                e("button", {
-                  className: "btn btn-success w-100 mt-4",
-                  type: "submit",
-                  disabled: !!(pwMismatch || pwShort)
-                }, "Create Account")
-              ),
-
-              e("div", { className: "mt-3 text-center" },
-                e("span", { className: "text-muted" }, "Already have an account? "),
-                e("a", { href: "/" }, "Login")
-              )
-            )
-          )
-        ),
-
-        e("div", { className: "col-lg-5" },
-          e("div", { className: "card shadow-sm h-100", style: { background: "linear-gradient(135deg, rgba(25,135,84,.10), rgba(13,110,253,.10))", border: "1px solid rgba(0,0,0,.06)" } },
-            e("div", { className: "card-body p-4" },
-              e("h5", { className: "mb-2" }, "Academic Note"),
-              e("div", { className: "text-muted small mb-3" },
-                "This project predicts final exam outcomes using continuous assessment, attendance, and previous CGPA. Final marks are not entered by students."
-              ),
-              e("ul", { className: "mb-0" },
-                e("li", null, "Student: enter marks, view predictions, get study materials"),
-                e("li", null, "Teacher: manage materials, view student analytics")
-              )
-            )
-          )
-        )
-      );
+    function bindPasswordToggle(button) {
+      button.addEventListener("click", function () {
+        var targetId = button.getAttribute("data-target");
+        var input = document.getElementById(targetId);
+        var show = input.type === "password";
+        input.type = show ? "text" : "password";
+        button.textContent = show ? "HIDE" : "SHOW";
+      });
     }
 
-    ReactDOM.createRoot(document.getElementById("auth-root")).render(e(RegisterApp));
+    passwordInput.addEventListener("input", validatePasswords);
+    confirmInput.addEventListener("input", validatePasswords);
+    document.querySelectorAll(".password-toggle").forEach(bindPasswordToggle);
+    validatePasswords();
   })();
 </script>
 {% endblock %}
+

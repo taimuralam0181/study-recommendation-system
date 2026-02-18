@@ -2,6 +2,689 @@
 {% block title %}Student Dashboard | Study Recommender{% endblock %}
 
 {% block content %}
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=Rajdhani:wght@500;700&display=swap");
+
+  .neo-dashboard {
+    --bg-main: #121b31;
+    --bg-alt: #1a2850;
+    --card: rgba(26, 37, 66, 0.78);
+    --line: rgba(132, 154, 207, 0.34);
+    --text-main: #e9f1ff;
+    --text-soft: rgba(221, 230, 255, 0.72);
+    --cyan: #2de5ff;
+    --green: #a6d82c;
+    --orange: #ff8f1f;
+    --violet: #7d5dff;
+    --blue: #2f79ff;
+
+    position: relative;
+    overflow: hidden;
+    border-radius: 26px;
+    padding: clamp(0.8rem, 1.8vw, 1.2rem);
+    color: var(--text-main);
+    background:
+      radial-gradient(circle at 8% 7%, rgba(166, 216, 44, 0.16), transparent 26%),
+      radial-gradient(circle at 94% 10%, rgba(45, 229, 255, 0.18), transparent 33%),
+      radial-gradient(circle at 88% 90%, rgba(47, 121, 255, 0.2), transparent 38%),
+      linear-gradient(140deg, var(--bg-main), #172446 58%, #1d2746 100%);
+    box-shadow: 0 22px 48px rgba(7, 10, 24, 0.56);
+    font-family: "Exo 2", sans-serif;
+  }
+
+  .neo-dashboard::before,
+  .neo-dashboard::after {
+    content: "";
+    position: absolute;
+    border-radius: 999px;
+    pointer-events: none;
+    filter: blur(2px);
+  }
+
+  .neo-dashboard::before {
+    width: 240px;
+    height: 240px;
+    left: -120px;
+    top: -95px;
+    background: radial-gradient(circle, rgba(45, 229, 255, 0.3), rgba(45, 229, 255, 0));
+  }
+
+  .neo-dashboard::after {
+    width: 250px;
+    height: 250px;
+    right: -130px;
+    bottom: -105px;
+    background: radial-gradient(circle, rgba(166, 216, 44, 0.26), rgba(166, 216, 44, 0));
+  }
+
+  .neo-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 0.9rem;
+  }
+
+  .col-left,
+  .col-right {
+    display: grid;
+    gap: 0.82rem;
+  }
+
+  .panel {
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--card), rgba(21, 31, 54, 0.76));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.035);
+    animation: rise-up 0.55s ease both;
+  }
+
+  .panel:nth-child(2) { animation-delay: 0.06s; }
+  .panel:nth-child(3) { animation-delay: 0.12s; }
+  .panel:nth-child(4) { animation-delay: 0.18s; }
+  .panel:nth-child(5) { animation-delay: 0.24s; }
+
+  .top-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.9rem;
+    padding: 0.8rem 0.88rem;
+  }
+
+  .top-user {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.68rem;
+  }
+
+  .orb {
+    width: 54px;
+    height: 54px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    border: 2px solid rgba(255, 255, 255, 0.16);
+    font-family: "Rajdhani", sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .orb-lock {
+    color: #18340e;
+    background: radial-gradient(circle at 30% 28%, #bde656, #6d9f22);
+    box-shadow: 0 0 16px rgba(166, 216, 44, 0.38);
+  }
+
+  .orb-cam {
+    color: #043447;
+    background: radial-gradient(circle at 34% 30%, #45f1ff, #289cff);
+    box-shadow: 0 0 16px rgba(45, 229, 255, 0.38);
+  }
+
+  .user-meta h2 {
+    margin: 0;
+    font-size: 1.06rem;
+    font-family: "Rajdhani", sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .user-meta p {
+    margin: 0.16rem 0 0;
+    font-size: 0.8rem;
+    color: var(--text-soft);
+  }
+
+  .status-pill {
+    flex-shrink: 0;
+    border-radius: 999px;
+    border: 1px solid rgba(129, 150, 201, 0.46);
+    padding: 0.3rem 0.7rem;
+    font-size: 0.76rem;
+    color: var(--text-soft);
+  }
+
+  .insight-card {
+    padding: 0.88rem 0.92rem;
+  }
+
+  .heading {
+    margin: 0;
+    font-size: 1.03rem;
+    font-family: "Rajdhani", sans-serif;
+    letter-spacing: 0.02em;
+  }
+
+  .subtext {
+    margin: 0.34rem 0 0.58rem;
+    font-size: 0.83rem;
+    color: var(--text-soft);
+    line-height: 1.43;
+  }
+
+  .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .dash-badge {
+    border-radius: 999px;
+    border: 1px solid rgba(141, 164, 217, 0.45);
+    background: rgba(16, 25, 48, 0.7);
+    padding: 0.23rem 0.56rem;
+    font-size: 0.73rem;
+    color: var(--text-main);
+  }
+
+  .badge-cyan { border-color: rgba(45, 229, 255, 0.42); color: #b8f7ff; }
+  .badge-green { border-color: rgba(166, 216, 44, 0.42); color: #d9f79b; }
+  .badge-violet { border-color: rgba(125, 93, 255, 0.46); color: #d9ccff; }
+
+  .player-card {
+    padding: 0.88rem 0.94rem;
+  }
+
+  .time-row {
+    margin-top: 0.52rem;
+    margin-bottom: 0.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-soft);
+  }
+
+  .timeline {
+    height: 9px;
+    border-radius: 999px;
+    background: rgba(128, 148, 199, 0.29);
+    overflow: hidden;
+  }
+
+  .timeline > span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ff7d10, #ffc229 57%, #d2e9ff);
+  }
+
+  .control-row {
+    margin-top: 0.62rem;
+    display: flex;
+    gap: 0.58rem;
+    flex-wrap: wrap;
+  }
+
+  .control-btn {
+    min-width: 84px;
+    border-radius: 999px;
+    border: 1px solid rgba(138, 160, 212, 0.44);
+    background: rgba(17, 27, 50, 0.7);
+    color: var(--text-main);
+    font-size: 0.74rem;
+    font-weight: 600;
+    padding: 0.26rem 0.68rem;
+    text-align: center;
+  }
+
+  .left-bottom {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    gap: 0.82rem;
+  }
+
+  .quick-card,
+  .history-card {
+    padding: 0.85rem 0.9rem;
+  }
+
+  .quick-links {
+    margin-top: 0.56rem;
+    display: grid;
+    gap: 0.52rem;
+  }
+
+  .quick-link {
+    border-radius: 999px;
+    text-decoration: none;
+    color: var(--text-main);
+    border: 1px solid rgba(135, 158, 212, 0.45);
+    background: linear-gradient(130deg, rgba(22, 33, 60, 0.93), rgba(18, 27, 51, 0.8));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.48rem;
+    padding: 0.48rem 0.72rem;
+    font-size: 0.82rem;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .quick-link:hover {
+    color: #dff8ff;
+    border-color: rgba(45, 229, 255, 0.64);
+    transform: translateY(-1px);
+  }
+
+  .history-list {
+    margin-top: 0.56rem;
+    display: grid;
+    gap: 0.46rem;
+    max-height: 174px;
+    overflow: auto;
+    padding-right: 0.18rem;
+  }
+
+  .history-list::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .history-list::-webkit-scrollbar-thumb {
+    background: rgba(126, 146, 198, 0.45);
+    border-radius: 999px;
+  }
+
+  .history-item {
+    border-radius: 10px;
+    border: 1px solid rgba(140, 163, 216, 0.28);
+    background: rgba(14, 23, 44, 0.62);
+    padding: 0.45rem 0.56rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.34rem;
+  }
+
+  .history-date {
+    margin: 0;
+    font-size: 0.74rem;
+    color: var(--text-soft);
+  }
+
+  .history-score {
+    margin: 0.12rem 0 0;
+    font-size: 0.77rem;
+    color: var(--text-main);
+  }
+
+  .history-pill {
+    align-self: center;
+    border-radius: 999px;
+    border: 1px solid rgba(45, 229, 255, 0.44);
+    color: #baf6ff;
+    background: rgba(21, 32, 56, 0.84);
+    font-size: 0.73rem;
+    font-weight: 600;
+    padding: 0.19rem 0.5rem;
+  }
+
+  .ring-panel {
+    padding: 0.9rem;
+  }
+
+  .ring-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.74rem;
+  }
+
+  .ring-shell {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 999px;
+    padding: 11px;
+    background: #33496f;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 12px 20px rgba(7, 11, 25, 0.46);
+  }
+
+  .ring-core {
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(160deg, rgba(20, 30, 56, 0.98), rgba(26, 36, 62, 0.92));
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 0.55rem;
+  }
+
+  .ring-core strong {
+    display: block;
+    font-family: "Rajdhani", sans-serif;
+    font-size: 1.46rem;
+    line-height: 1;
+    letter-spacing: 0.01em;
+  }
+
+  .ring-core span {
+    margin-top: 0.2rem;
+    font-size: 0.73rem;
+    color: var(--text-soft);
+    line-height: 1.2;
+  }
+
+  .legend {
+    margin-top: 0.62rem;
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+  }
+
+  .legend-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--text-soft);
+  }
+
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+  }
+
+  .meter-panel {
+    padding: 0.86rem 0.9rem;
+  }
+
+  .meter-layout {
+    margin-top: 0.62rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 42px;
+    gap: 0.58rem;
+  }
+
+  .meter-stack {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.52rem;
+    align-items: end;
+  }
+
+  .meter-col {
+    text-align: center;
+  }
+
+  .meter-rail {
+    position: relative;
+    height: 162px;
+    border-radius: 999px;
+    border: 1px solid rgba(135, 156, 207, 0.32);
+    background: linear-gradient(180deg, rgba(67, 83, 124, 0.25), rgba(39, 54, 90, 0.24));
+    overflow: hidden;
+  }
+
+  .meter-fill {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #33e4ff, #1f82ff 72%, #2f66ff 100%);
+    box-shadow: 0 -5px 12px rgba(51, 228, 255, 0.28);
+  }
+
+  .meter-thumb {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    border: 1px solid rgba(160, 234, 255, 0.56);
+    background: radial-gradient(circle at 30% 30%, #6df3ff, #2f8cff);
+    box-shadow: 0 0 13px rgba(45, 229, 255, 0.38);
+  }
+
+  .meter-name {
+    margin-top: 0.45rem;
+    font-size: 0.73rem;
+    color: var(--text-soft);
+  }
+
+  .meter-value {
+    margin-top: 0.08rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .side-control {
+    border-radius: 999px;
+    border: 1px solid rgba(135, 156, 207, 0.32);
+    background: rgba(17, 27, 51, 0.76);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.2rem;
+  }
+
+  .side-control button {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 1px solid rgba(45, 229, 255, 0.62);
+    background: radial-gradient(circle at 35% 33%, #52f0ff, #2e8fff);
+    color: #04364b;
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .side-track {
+    width: 2px;
+    flex: 1;
+    margin: 0.34rem 0;
+    background: linear-gradient(180deg, rgba(114, 138, 196, 0.2), rgba(114, 138, 196, 0.55), rgba(114, 138, 196, 0.2));
+  }
+
+  .stats-panel {
+    padding: 0.86rem 0.9rem;
+  }
+
+  .stats-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .value-box h4 {
+    margin: 0;
+    font-family: "Rajdhani", sans-serif;
+    font-size: 1.7rem;
+    line-height: 1;
+  }
+
+  .value-box p {
+    margin: 0.2rem 0 0;
+    color: var(--text-soft);
+    font-size: 0.76rem;
+  }
+
+  .delta-pill {
+    border-radius: 999px;
+    border: 1px solid rgba(166, 216, 44, 0.45);
+    color: #d9f79b;
+    background: rgba(26, 40, 25, 0.5);
+    font-size: 0.76rem;
+    padding: 0.22rem 0.52rem;
+  }
+
+  .spark-wrap {
+    margin-top: 0.56rem;
+    height: 138px;
+    border-radius: 12px;
+    border: 1px solid rgba(136, 158, 212, 0.28);
+    background: linear-gradient(180deg, rgba(14, 24, 45, 0.72), rgba(12, 21, 40, 0.7));
+    padding: 0.45rem;
+  }
+
+  .spark {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .spark-labels {
+    margin-top: 0.3rem;
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-soft);
+    font-size: 0.71rem;
+  }
+
+  .toggle-row {
+    margin-top: 0.52rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .toggle-box {
+    border-radius: 999px;
+    border: 1px solid rgba(136, 158, 212, 0.35);
+    background: rgba(12, 21, 40, 0.68);
+    padding: 0.33rem 0.44rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+    font-size: 0.72rem;
+    color: var(--text-soft);
+  }
+
+  .switch {
+    width: 43px;
+    height: 22px;
+    border-radius: 999px;
+    border: 1px solid rgba(128, 151, 204, 0.56);
+    background: rgba(84, 100, 141, 0.48);
+    padding: 2px;
+    transition: background 0.2s ease;
+  }
+
+  .switch > span {
+    display: block;
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: #f3f8ff;
+    transform: translateX(0);
+    transition: transform 0.2s ease;
+  }
+
+  .switch.active {
+    background: rgba(166, 216, 44, 0.44);
+  }
+
+  .switch.active > span {
+    transform: translateX(20px);
+    background: #e2ffb4;
+  }
+
+  .empty-card {
+    max-width: 620px;
+    margin: 0 auto;
+    text-align: center;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(24, 36, 65, 0.9), rgba(18, 28, 51, 0.84));
+    padding: 1.8rem 1.3rem;
+  }
+
+  .empty-card h3 {
+    margin: 0;
+    font-family: "Rajdhani", sans-serif;
+    font-size: 1.45rem;
+  }
+
+  .empty-card p {
+    margin: 0.48rem auto 0;
+    max-width: 500px;
+    color: var(--text-soft);
+    font-size: 0.9rem;
+  }
+
+  .empty-card a {
+    margin-top: 0.86rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    border: 1px solid rgba(45, 229, 255, 0.52);
+    color: #dff8ff;
+    text-decoration: none;
+    padding: 0.45rem 0.88rem;
+  }
+
+  @keyframes rise-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 1100px) {
+    .neo-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .left-bottom {
+      grid-template-columns: 1fr;
+    }
+
+    .ring-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      max-width: 520px;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .neo-dashboard {
+      border-radius: 16px;
+      padding: 0.68rem;
+    }
+
+    .top-line {
+      flex-wrap: wrap;
+    }
+
+    .ring-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .meter-stack {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      row-gap: 0.9rem;
+    }
+
+    .meter-rail {
+      height: 132px;
+    }
+
+    .toggle-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
 <div id="student-dashboard-root"></div>
 
 <script>
@@ -38,117 +721,314 @@
   };
 </script>
 
-<!-- React (CDN) -->
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
 <script>
   (function () {
-    var e = React.createElement;
+    var ce = React.createElement;
     var props = window.__STUDENT_DASHBOARD_PROPS__ || {};
 
-    function Badge(p) {
-      var cls = "badge " + (p.className || "text-bg-secondary");
-      return e("span", { className: cls }, p.children);
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
     }
 
-    function StudentDashboard() {
+    function toNumber(value, fallback) {
+      var n = Number(value);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function shorten(text, maxLen) {
+      if (!text) {
+        return "";
+      }
+      return text.length > maxLen ? text.slice(0, maxLen - 3) + "..." : text;
+    }
+
+    function conicFrom(values, colors, emptyColor) {
+      var total = values.reduce(function (sum, item) { return sum + item; }, 0);
+      if (total <= 0) {
+        return "conic-gradient(" + emptyColor + " 0deg 360deg)";
+      }
+      var used = 0;
+      var segments = [];
+      for (var i = 0; i < values.length; i += 1) {
+        var size = (values[i] / total) * 360;
+        var start = used;
+        var end = used + size;
+        segments.push(colors[i] + " " + start.toFixed(2) + "deg " + end.toFixed(2) + "deg");
+        used = end;
+      }
+      if (used < 360) {
+        segments.push(emptyColor + " " + used.toFixed(2) + "deg 360deg");
+      }
+      return "conic-gradient(" + segments.join(", ") + ")";
+    }
+
+    function polylinePoints(series) {
+      var values = series && series.length ? series : [50, 50, 50, 50];
+      if (values.length === 1) {
+        values = [values[0], values[0]];
+      }
+      var width = 280;
+      var height = 110;
+      var step = width / (values.length - 1);
+      return values.map(function (v, idx) {
+        var x = idx * step;
+        var y = height - clamp(v, 0, 100) * 1.02;
+        return x.toFixed(1) + "," + clamp(y, 8, height - 4).toFixed(1);
+      }).join(" ");
+    }
+
+    function areaPoints(polyPoints) {
+      return polyPoints + " 280,112 0,112";
+    }
+
+    function EmptyState() {
+      return ce("section", { className: "neo-dashboard" },
+        ce("div", { className: "empty-card" },
+          ce("h3", null, "No recommendation data yet"),
+          ce("p", null, "Dashboard layout is ready. Run recommendation to see score rings, sliders, trend, and recent history insights."),
+          ce("a", { href: "/ml/recommend/" }, "Generate Recommendation", ce("span", { "aria-hidden": true }, "->"))
+        )
+      );
+    }
+
+    function Dashboard() {
       var student = props.student;
-      var academic = props.academic_ml;
+      if (!student) {
+        return ce(EmptyState);
+      }
 
-      return e("div", null,
-        e("div", { className: "d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2" },
-          e("div", null,
-            e("h3", { className: "mb-1" }, "Student Dashboard"),
-            e("div", { className: "text-muted" }, "Personalized study recommendation and academic progress summary.")
-          ),
-          e("div", { className: "d-flex gap-2 flex-wrap" },
-            e("a", { className: "btn btn-outline-primary", href: "/student/performance/" }, "View Performance"),
-            e("a", { className: "btn btn-primary", href: "/ml/recommend/" }, "Get Recommendation")
-          )
-        ),
+      var math = clamp(toNumber(student.math_marks, 0), 0, 100);
+      var physics = clamp(toNumber(student.physics_marks, 0), 0, 100);
+      var cs = clamp(toNumber(student.cs_marks, 0), 0, 100);
+      var avgBySubjects = (math + physics + cs) / 3;
+      var avg = clamp(toNumber(student.avg_score, avgBySubjects), 0, 100);
 
-        academic ? e("div", { className: "card shadow-sm mb-3" },
-          e("div", { className: "card-body p-4" },
-            e("div", { className: "d-flex justify-content-between align-items-start gap-3 flex-wrap" },
-              e("div", null,
-                e("h5", { className: "mb-1" }, "Academic ML Summary"),
-                e("div", { className: "text-muted small" }, "Computed from your semester/subject performance (explainable clustering).")
+      var academic = props.academic_ml || null;
+      var cluster = academic && academic.performance_cluster ? academic.performance_cluster : "Unknown";
+      var level = student.level || (academic && academic.study_level) || "Unknown";
+      var detectedLevel = academic && academic.study_level ? academic.study_level : level;
+      var nSubjects = academic && academic.features ? toNumber(academic.features.n_subjects, 0) : 0;
+
+      var explanation = shorten(props.ml_explanation || (academic && academic.explanation) || "", 160);
+      if (!explanation) {
+        explanation = "Model explanation not found. Generate or update recommendation to enrich this panel.";
+      }
+
+      var history = Array.isArray(props.history) ? props.history : [];
+      var recent = history.slice(0, 5);
+      var avgSeries = history.slice().reverse().map(function (row) {
+        return clamp(toNumber(row.avg_score, 0), 0, 100);
+      });
+      if (!avgSeries.length) {
+        avgSeries = [avg, avg, avg];
+      }
+
+      var firstAvg = avgSeries[0];
+      var lastAvg = avgSeries[avgSeries.length - 1];
+      var gain = lastAvg - firstAvg;
+      var gainText = (gain >= 0 ? "+" : "") + gain.toFixed(1) + "%";
+
+      var subjectRing = conicFrom(
+        [math, physics, cs],
+        ["#ff8f1f", "#2de5ff", "#7d5dff"],
+        "#33496f"
+      );
+      var avgRing = "conic-gradient(#a6d82c 0deg " + (avg * 3.6).toFixed(1) + "deg, #33496f " + (avg * 3.6).toFixed(1) + "deg 360deg)";
+
+      var timelineMinutes = Math.max(20, Math.round(avg * 0.55));
+      var timelineTarget = Math.max(40, Math.round(95 - avg * 0.3));
+
+      var focusMode = avg >= 60;
+      var alertMode = avg < 45;
+
+      var trendPoly = polylinePoints(avgSeries);
+      var trendArea = areaPoints(trendPoly);
+
+      return ce("section", { className: "neo-dashboard" },
+        ce("div", { className: "neo-grid" },
+          ce("div", { className: "col-left" },
+            ce("div", { className: "panel top-line" },
+              ce("div", { className: "top-user" },
+                ce("div", { className: "orb orb-lock", "aria-hidden": true }, "SEC"),
+                ce("div", { className: "user-meta" },
+                  ce("h2", null, props.username || "Student"),
+                  ce("p", null, "Smart learning dashboard")
+                )
               ),
-              e(Badge, { className: "text-bg-light border text-dark" }, "Subjects: " + (academic.features && academic.features.n_subjects ? academic.features.n_subjects : 0))
-            ),
-            e("div", { className: "d-flex flex-wrap gap-2 mt-2" },
-              e(Badge, { className: "text-bg-secondary" }, "Cluster: " + academic.performance_cluster),
-              e(Badge, { className: "text-bg-primary" }, "Study Level: " + academic.study_level)
-            ),
-            e("pre", { className: "bg-light border rounded p-2 mt-3 mb-0", style: { whiteSpace: "pre-wrap" } }, academic.explanation)
-          )
-        ) : null,
-
-        student ? e("div", { className: "card shadow-sm mb-3" },
-          e("div", { className: "card-body p-4" },
-            e("div", { className: "d-flex justify-content-between align-items-start flex-wrap gap-2" },
-              e("div", null,
-                e("h5", { className: "mb-1" }, "Current Level"),
-                e("div", { className: "fs-4 fw-bold" }, student.level)
-              ),
-              e("div", { className: "text-end" },
-                e(Badge, { className: "text-bg-dark" }, "Avg: " + (Number(student.avg_score || 0).toFixed(1)))
+              ce("div", { className: "top-user" },
+                ce("span", { className: "status-pill" }, "Last sync: " + (recent.length ? recent[0].created_at : "No run")),
+                ce("div", { className: "orb orb-cam", "aria-hidden": true }, "AI")
               )
             ),
-            props.ml_explanation ? e("div", { className: "text-muted mt-2" }, props.ml_explanation) : null,
-            e("hr", null),
-            e("div", { className: "row g-2" },
-              e("div", { className: "col-md-3" }, e("div", { className: "text-muted small" }, "Math"), e("div", { className: "fw-bold" }, student.math_marks)),
-              e("div", { className: "col-md-3" }, e("div", { className: "text-muted small" }, "Physics"), e("div", { className: "fw-bold" }, student.physics_marks)),
-              e("div", { className: "col-md-3" }, e("div", { className: "text-muted small" }, "Computer Science"), e("div", { className: "fw-bold" }, student.cs_marks)),
-              e("div", { className: "col-md-3" }, e("div", { className: "text-muted small" }, "Average"), e("div", { className: "fw-bold" }, Number(student.avg_score || 0).toFixed(1)))
-            )
-          )
-        ) : e("div", { className: "alert alert-info" },
-          "No previous recommendation found. Click ",
-          e("strong", null, "Get Recommendation"),
-          " to start."
-        ),
 
-        e("div", { className: "card shadow-sm" },
-          e("div", { className: "card-body p-4" },
-            e("h5", { className: "mb-3" }, "Recent History (Last 5)"),
-            props.history && props.history.length ? (
-              e("div", { className: "table-responsive" },
-                e("table", { className: "table table-sm table-bordered align-middle mb-0" },
-                  e("thead", { className: "table-light" },
-                    e("tr", null,
-                      e("th", null, "Date"),
-                      e("th", null, "Math"),
-                      e("th", null, "Physics"),
-                      e("th", null, "CS"),
-                      e("th", null, "Average"),
-                      e("th", null, "Level")
-                    )
-                  ),
-                  e("tbody", null,
-                    props.history.slice(0, 5).map(function (it, idx) {
-                      return e("tr", { key: idx },
-                        e("td", null, it.created_at),
-                        e("td", null, it.math_marks),
-                        e("td", null, it.physics_marks),
-                        e("td", null, it.cs_marks),
-                        e("td", null, it.avg_score),
-                        e("td", null, e(Badge, { className: "text-bg-secondary" }, it.level))
-                      );
-                    })
-                  )
+            ce("div", { className: "panel insight-card" },
+              ce("h4", { className: "heading" }, "Academic Model Snapshot"),
+              ce("p", { className: "subtext" }, explanation),
+              ce("div", { className: "badge-row" },
+                ce("span", { className: "dash-badge badge-cyan" }, "Cluster: " + cluster),
+                ce("span", { className: "dash-badge badge-green" }, "Level: " + detectedLevel),
+                ce("span", { className: "dash-badge badge-violet" }, "Subjects: " + nSubjects)
+              )
+            ),
+
+            ce("div", { className: "panel player-card" },
+              ce("h4", { className: "heading" }, "Focus Session Track"),
+              ce("p", { className: "subtext" }, "Current profile level: " + level + ". Continue daily blocks to stabilize the trend."),
+              ce("div", { className: "time-row" },
+                ce("span", null, "Elapsed " + timelineMinutes + " min"),
+                ce("span", null, "Target " + timelineTarget + " min")
+              ),
+              ce("div", { className: "timeline" },
+                ce("span", { style: { width: avg.toFixed(1) + "%" } })
+              ),
+              ce("div", { className: "control-row", "aria-hidden": true },
+                ce("span", { className: "control-btn" }, "PREV"),
+                ce("span", { className: "control-btn" }, "PAUSE"),
+                ce("span", { className: "control-btn" }, "NEXT")
+              )
+            ),
+
+            ce("div", { className: "left-bottom" },
+              ce("div", { className: "panel quick-card" },
+                ce("h4", { className: "heading" }, "Quick Actions"),
+                ce("div", { className: "quick-links" },
+                  ce("a", { className: "quick-link", href: "/student/performance/" }, "Performance Overview", ce("span", { "aria-hidden": true }, "->")),
+                  ce("a", { className: "quick-link", href: "/ml/recommend/" }, "Run Recommendation", ce("span", { "aria-hidden": true }, "->")),
+                  ce("a", { className: "quick-link", href: "/student/performance/" }, "Semester Breakdown", ce("span", { "aria-hidden": true }, "->"))
+                )
+              ),
+              ce("div", { className: "panel history-card" },
+                ce("h4", { className: "heading" }, "Recent Attempts"),
+                ce("div", { className: "history-list" },
+                  recent.length ? recent.map(function (item, idx) {
+                    var rowAvg = clamp(toNumber(item.avg_score, 0), 0, 100);
+                    return ce("div", { className: "history-item", key: idx },
+                      ce("div", null,
+                        ce("p", { className: "history-date" }, item.created_at || "-"),
+                        ce("p", { className: "history-score" }, "M " + item.math_marks + " | P " + item.physics_marks + " | CS " + item.cs_marks)
+                      ),
+                      ce("span", { className: "history-pill" }, rowAvg.toFixed(1) + "%")
+                    );
+                  }) : ce("p", { className: "history-date" }, "No history available.")
                 )
               )
-            ) : e("div", { className: "text-muted" }, "No history yet.")
+            )
+          ),
+
+          ce("aside", { className: "col-right" },
+            ce("div", { className: "panel ring-panel" },
+              ce("div", { className: "ring-grid" },
+                ce("div", { className: "ring-shell", style: { background: subjectRing } },
+                  ce("div", { className: "ring-core" },
+                    ce("strong", null, avg.toFixed(0) + "%"),
+                    ce("span", null, "Subject mix")
+                  )
+                ),
+                ce("div", { className: "ring-shell", style: { background: avgRing } },
+                  ce("div", { className: "ring-core" },
+                    ce("strong", null, level),
+                    ce("span", null, "Current level")
+                  )
+                )
+              ),
+              ce("div", { className: "legend" },
+                ce("div", { className: "legend-item" },
+                  ce("span", { className: "legend-label" }, ce("span", { className: "dot", style: { background: "#ff8f1f" } }), "Math"),
+                  ce("strong", null, math.toFixed(0) + "%")
+                ),
+                ce("div", { className: "legend-item" },
+                  ce("span", { className: "legend-label" }, ce("span", { className: "dot", style: { background: "#2de5ff" } }), "Physics"),
+                  ce("strong", null, physics.toFixed(0) + "%")
+                ),
+                ce("div", { className: "legend-item" },
+                  ce("span", { className: "legend-label" }, ce("span", { className: "dot", style: { background: "#7d5dff" } }), "Computer Science"),
+                  ce("strong", null, cs.toFixed(0) + "%")
+                )
+              )
+            ),
+
+            ce("div", { className: "panel meter-panel" },
+              ce("h4", { className: "heading" }, "Performance Sliders"),
+              ce("div", { className: "meter-layout" },
+                ce("div", { className: "meter-stack" },
+                  [
+                    { key: "Math", value: math },
+                    { key: "Physics", value: physics },
+                    { key: "CS", value: cs },
+                    { key: "Avg", value: avg }
+                  ].map(function (metric) {
+                    var h = metric.value.toFixed(1) + "%";
+                    return ce("div", { className: "meter-col", key: metric.key },
+                      ce("div", { className: "meter-rail" },
+                        ce("div", { className: "meter-fill", style: { height: h } }),
+                        ce("span", { className: "meter-thumb", style: { bottom: h } })
+                      ),
+                      ce("div", { className: "meter-name" }, metric.key),
+                      ce("div", { className: "meter-value" }, metric.value.toFixed(0) + "%")
+                    );
+                  })
+                ),
+                ce("div", { className: "side-control", "aria-hidden": true },
+                  ce("button", { type: "button", tabIndex: -1 }, "+"),
+                  ce("div", { className: "side-track" }),
+                  ce("button", { type: "button", tabIndex: -1 }, "-")
+                )
+              )
+            ),
+
+            ce("div", { className: "panel stats-panel" },
+              ce("div", { className: "stats-head" },
+                ce("div", { className: "value-box" },
+                  ce("h4", null, avg.toFixed(1) + "%"),
+                  ce("p", null, "Overall confidence")
+                ),
+                ce("span", { className: "delta-pill" }, gainText)
+              ),
+              ce("div", { className: "spark-wrap" },
+                ce("svg", { className: "spark", viewBox: "0 0 280 112", preserveAspectRatio: "none" },
+                  ce("defs", null,
+                    ce("linearGradient", { id: "trendFill", x1: "0", y1: "0", x2: "0", y2: "1" },
+                      ce("stop", { offset: "0%", stopColor: "rgba(45,229,255,0.46)" }),
+                      ce("stop", { offset: "100%", stopColor: "rgba(45,229,255,0.05)" })
+                    )
+                  ),
+                  ce("polygon", { points: trendArea, fill: "url(#trendFill)" }),
+                  ce("polyline", {
+                    points: trendPoly,
+                    fill: "none",
+                    stroke: "#2de5ff",
+                    strokeWidth: "3",
+                    strokeLinejoin: "round",
+                    strokeLinecap: "round"
+                  })
+                )
+              ),
+              ce("div", { className: "spark-labels" },
+                ce("span", null, "R1"),
+                ce("span", null, "R2"),
+                ce("span", null, "R3"),
+                ce("span", null, "R4")
+              ),
+              ce("div", { className: "toggle-row" },
+                ce("div", { className: "toggle-box" },
+                  ce("span", null, "Focus mode"),
+                  ce("span", { className: "switch" + (focusMode ? " active" : "") }, ce("span", null))
+                ),
+                ce("div", { className: "toggle-box" },
+                  ce("span", null, "Risk alert"),
+                  ce("span", { className: "switch" + (alertMode ? " active" : "") }, ce("span", null))
+                )
+              )
+            )
           )
         )
       );
     }
 
-    ReactDOM.createRoot(document.getElementById("student-dashboard-root")).render(e(StudentDashboard));
+    ReactDOM.createRoot(document.getElementById("student-dashboard-root")).render(ce(Dashboard));
   })();
 </script>
 {% endblock %}
-

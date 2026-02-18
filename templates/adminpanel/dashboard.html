@@ -2,213 +2,1077 @@
 {% block title %}Teacher Dashboard | Study Recommender{% endblock %}
 
 {% block content %}
-<div class="d-flex align-items-center justify-content-between mb-3">
-  <div>
-    <h3 class="mb-0">Teacher Dashboard</h3>
-    <p class="text-muted mb-0">Training status, dataset quality, and student-risk monitoring.</p>
-  </div>
-  <div class="d-flex gap-2">
-    <a class="btn btn-outline-primary" href="{% url 'upload_dataset' %}">Dataset and Training</a>
-    <a class="btn btn-primary" href="{% url 'teacher_add_material' %}">Add Material</a>
-  </div>
-</div>
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap");
 
-<div class="row g-3 mb-3">
-  <div class="col-md-3">
-    <div class="card shadow-sm h-100"><div class="card-body">
-      <div class="text-muted small">Total Students</div>
-      <div class="fs-3 fw-bold">{{ total_students }}</div>
-    </div></div>
-  </div>
-  <div class="col-md-3">
-    <div class="card shadow-sm h-100"><div class="card-body">
-      <div class="text-muted small">Average Overall</div>
-      <div class="fs-3 fw-bold">{{ avg_overall|floatformat:1 }}</div>
-    </div></div>
-  </div>
-  <div class="col-md-3">
-    <div class="card shadow-sm h-100"><div class="card-body">
-      <div class="text-muted small">Dataset Rows</div>
-      <div class="fs-3 fw-bold">{{ dataset_rows }}</div>
-    </div></div>
-  </div>
-  <div class="col-md-3">
-    <div class="card shadow-sm h-100"><div class="card-body">
-      <div class="text-muted small">Weakest Subject</div>
-      <div class="fs-3 fw-bold">{{ weakest_subject }}</div>
-    </div></div>
-  </div>
-</div>
+  .teacher-neo {
+    --bg-1: #121b32;
+    --bg-2: #1b2950;
+    --card: rgba(24, 36, 65, 0.82);
+    --line: rgba(130, 154, 212, 0.35);
+    --txt-main: #eaf2ff;
+    --txt-soft: rgba(220, 230, 255, 0.75);
+    --cyan: #32e6ff;
+    --green: #a6d82c;
+    --orange: #ff951f;
+    --violet: #8060ff;
+    --red: #ff5b7a;
 
-<div class="row g-3 mb-3">
-  <div class="col-lg-6">
-    <div class="card shadow-sm h-100">
-      <div class="card-body">
-        <h5>Upload Status</h5>
-        <ul class="mb-0">
-          <li>Pending: {{ upload_status_counts.pending|default:0 }}</li>
-          <li>Running: {{ upload_status_counts.running|default:0 }}</li>
-          <li>Success: {{ upload_status_counts.success|default:0 }}</li>
-          <li>Failed: {{ upload_status_counts.failed|default:0 }}</li>
-        </ul>
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    padding: clamp(0.75rem, 1.8vw, 1.2rem);
+    color: var(--txt-main);
+    background:
+      radial-gradient(circle at 3% 6%, rgba(50, 230, 255, 0.18), transparent 24%),
+      radial-gradient(circle at 95% 94%, rgba(166, 216, 44, 0.16), transparent 33%),
+      linear-gradient(145deg, var(--bg-1), #172748 58%, #1b2a4f 100%);
+    box-shadow: 0 24px 52px rgba(8, 12, 28, 0.56);
+    font-family: "Exo 2", sans-serif;
+  }
+
+  .teacher-neo::before,
+  .teacher-neo::after {
+    content: "";
+    position: absolute;
+    border-radius: 999px;
+    pointer-events: none;
+    filter: blur(2px);
+  }
+
+  .teacher-neo::before {
+    width: 260px;
+    height: 260px;
+    top: -122px;
+    left: -138px;
+    background: radial-gradient(circle, rgba(166, 216, 44, 0.25), rgba(166, 216, 44, 0));
+  }
+
+  .teacher-neo::after {
+    width: 250px;
+    height: 250px;
+    right: -132px;
+    bottom: -112px;
+    background: radial-gradient(circle, rgba(50, 230, 255, 0.24), rgba(50, 230, 255, 0));
+  }
+
+  .tn-layer {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .tn-panel {
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--card), rgba(20, 30, 55, 0.8));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.035);
+  }
+
+  .tn-header {
+    padding: 0.88rem 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    animation: rise-in 0.55s ease both;
+  }
+
+  .tn-kicker {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid rgba(50, 230, 255, 0.44);
+    background: rgba(16, 28, 54, 0.72);
+    color: #bef9ff;
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .tn-title {
+    margin: 0.32rem 0 0.1rem;
+    font-family: "Rajdhani", sans-serif;
+    font-size: 1.72rem;
+    line-height: 1;
+    letter-spacing: 0.01em;
+  }
+
+  .tn-sub {
+    margin: 0;
+    color: var(--txt-soft);
+    font-size: 0.86rem;
+  }
+
+  .tn-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .tn-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.42rem 0.86rem;
+    text-decoration: none;
+    border: 1px solid rgba(128, 151, 206, 0.46);
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+
+  .tn-btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .tn-btn-outline {
+    color: #e8f2ff;
+    background: rgba(15, 27, 50, 0.72);
+  }
+
+  .tn-btn-outline:hover {
+    color: #f4fbff;
+    border-color: rgba(50, 230, 255, 0.6);
+  }
+
+  .tn-btn-solid {
+    color: #001d2b;
+    border-color: rgba(50, 230, 255, 0.65);
+    background: linear-gradient(130deg, #4ef0ff, #36b3ff);
+  }
+
+  .tn-btn-solid:hover {
+    color: #002537;
+    border-color: rgba(50, 230, 255, 0.8);
+  }
+
+  .tn-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.92rem;
+  }
+
+  .tn-stat-card {
+    padding: 0.74rem 0.8rem;
+    animation: rise-in 0.55s ease both;
+  }
+
+  .tn-stat-label {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--txt-soft);
+    letter-spacing: 0.02em;
+  }
+
+  .tn-stat-value {
+    margin: 0.34rem 0 0;
+    font-family: "Rajdhani", sans-serif;
+    font-size: 1.9rem;
+    line-height: 1;
+  }
+
+  .tn-stat-hint {
+    margin: 0.22rem 0 0;
+    font-size: 0.73rem;
+    color: var(--txt-soft);
+  }
+
+  .tn-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.95rem;
+    min-width: 0;
+  }
+
+  .tn-left {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: grid;
+    gap: 0.9rem;
+    align-content: start;
+  }
+
+  .tn-right {
+    flex: 0 0 350px;
+    width: 350px;
+    min-width: 350px;
+    max-width: 350px;
+    display: grid;
+    gap: 0.9rem;
+    align-content: start;
+    overflow: hidden;
+  }
+
+  .tn-section-head {
+    margin: 0;
+    font-family: "Rajdhani", sans-serif;
+    letter-spacing: 0.01em;
+    font-size: 1.18rem;
+  }
+
+  .tn-health {
+    padding: 0.88rem 0.92rem;
+    animation: rise-in 0.55s ease both;
+    animation-delay: 0.04s;
+  }
+
+  .tn-health-grid {
+    margin-top: 0.58rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  .tn-mini {
+    border-radius: 12px;
+    border: 1px solid rgba(133, 156, 211, 0.32);
+    background: rgba(14, 24, 46, 0.62);
+    padding: 0.58rem 0.64rem;
+  }
+
+  .tn-mini h5 {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #d7ecff;
+  }
+
+  .tn-mini-time {
+    margin: 0.24rem 0 0.36rem;
+    font-size: 0.73rem;
+    color: var(--txt-soft);
+  }
+
+  .tn-mini-line {
+    margin: 0.17rem 0;
+    font-size: 0.78rem;
+    color: var(--txt-main);
+  }
+
+  .tn-mini-fallback {
+    margin: 0.3rem 0 0;
+    color: var(--txt-soft);
+    font-size: 0.78rem;
+  }
+
+  .tn-alert {
+    padding: 0.72rem 0.84rem;
+    border-color: rgba(255, 112, 138, 0.52);
+    background: linear-gradient(180deg, rgba(61, 24, 36, 0.8), rgba(42, 19, 28, 0.72));
+    animation: rise-in 0.55s ease both;
+    animation-delay: 0.08s;
+  }
+
+  .tn-alert h5 {
+    margin: 0;
+    font-family: "Rajdhani", sans-serif;
+    font-size: 1rem;
+    color: #ffc8d2;
+  }
+
+  .tn-alert-list {
+    margin: 0.42rem 0 0;
+    padding-left: 1rem;
+  }
+
+  .tn-alert-list li {
+    color: #ffdce3;
+    font-size: 0.79rem;
+    margin: 0.16rem 0;
+  }
+
+  .tn-table-panel {
+    padding: 0.84rem 0.88rem;
+    animation: rise-in 0.55s ease both;
+  }
+
+  .tn-table-panel:nth-of-type(3) { animation-delay: 0.12s; }
+  .tn-table-panel:nth-of-type(4) { animation-delay: 0.16s; }
+
+  .tn-table-title {
+    margin: 0 0 0.56rem;
+    font-family: "Rajdhani", sans-serif;
+    font-size: 1.07rem;
+  }
+
+  .tn-table-wrap {
+    border-radius: 12px;
+    border: 1px solid rgba(132, 156, 213, 0.28);
+    overflow: auto;
+    background: rgba(11, 20, 38, 0.55);
+  }
+
+  .tn-table {
+    width: 100%;
+    min-width: 640px;
+    border-collapse: collapse;
+  }
+
+  .tn-table th,
+  .tn-table td {
+    font-size: 0.75rem;
+    padding: 0.46rem 0.52rem;
+    border-bottom: 1px solid rgba(121, 145, 200, 0.2);
+    vertical-align: top;
+  }
+
+  .tn-table th {
+    color: #c8dcff;
+    font-weight: 600;
+    background: rgba(14, 26, 49, 0.68);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .tn-table td {
+    color: #e5eeff;
+  }
+
+  .tn-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .tn-muted {
+    color: var(--txt-soft);
+    font-size: 0.76rem;
+  }
+
+  .tn-chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid rgba(136, 160, 216, 0.42);
+    background: rgba(17, 28, 52, 0.78);
+    font-size: 0.7rem;
+    padding: 0.15rem 0.45rem;
+  }
+
+  .tn-chip-danger {
+    border-color: rgba(255, 91, 122, 0.58);
+    color: #ffc1cd;
+  }
+
+  .tn-download {
+    border-radius: 999px;
+    border: 1px solid rgba(50, 230, 255, 0.46);
+    color: #d8f8ff;
+    text-decoration: none;
+    font-size: 0.72rem;
+    padding: 0.22rem 0.48rem;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .tn-download:hover {
+    color: #f1fdff;
+    border-color: rgba(50, 230, 255, 0.7);
+  }
+
+  .tn-right-panel {
+    padding: 0.74rem 0.78rem;
+    animation: rise-in 0.55s ease both;
+  }
+
+  .tn-right-title {
+    margin: 0;
+    font-family: "Rajdhani", sans-serif;
+    font-size: 1.04rem;
+  }
+
+  .tn-menu-panel {
+    animation-delay: 0.05s;
+  }
+
+  .tn-menu-hint {
+    margin: 0.2rem 0 0.5rem;
+    font-size: 0.72rem;
+  }
+
+  .tn-menu-list {
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  .tn-menu-btn {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(131, 154, 212, 0.22);
+    background: rgba(16, 27, 50, 0.5);
+    color: #d8e6ff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.44rem 0.56rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+  }
+
+  .tn-menu-main {
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .tn-menu-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    border: 1px solid rgba(131, 154, 212, 0.32);
+    background: rgba(10, 20, 39, 0.82);
+    color: #c7dbff;
+    font-size: 0.67rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .tn-menu-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tn-menu-arrow {
+    color: rgba(190, 210, 255, 0.8);
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+
+  .tn-menu-btn:hover {
+    border-color: rgba(50, 230, 255, 0.56);
+    background: rgba(23, 37, 66, 0.86);
+    color: #ecf5ff;
+    transform: translateY(-1px);
+  }
+
+  .tn-menu-btn.is-active {
+    border-color: rgba(76, 140, 255, 0.66);
+    background: linear-gradient(120deg, rgba(35, 94, 214, 0.85), rgba(38, 110, 238, 0.84));
+    box-shadow: inset 0 0 12px rgba(190, 219, 255, 0.2);
+    color: #f7fbff;
+  }
+
+  .tn-menu-btn.is-active .tn-menu-icon {
+    border-color: rgba(213, 233, 255, 0.48);
+    background: rgba(20, 52, 113, 0.88);
+    color: #ffffff;
+  }
+
+  .tn-menu-btn.is-active .tn-menu-arrow {
+    color: #ffffff;
+  }
+
+  .tn-slide-card {
+    display: none;
+    animation: none;
+  }
+
+  .tn-slide-card.is-active {
+    display: block;
+    animation: slide-from-right 0.32s ease both;
+  }
+
+  @keyframes slide-from-right {
+    from {
+      opacity: 0;
+      transform: translateX(42px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .tn-list {
+    margin-top: 0;
+    display: grid;
+    gap: 0.42rem;
+  }
+
+  .tn-list-item {
+    border-radius: 10px;
+    border: 1px solid rgba(131, 154, 210, 0.3);
+    background: rgba(12, 22, 42, 0.65);
+    padding: 0.4rem 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.42rem;
+  }
+
+  .tn-list-label {
+    margin: 0;
+    font-size: 0.77rem;
+    color: var(--txt-soft);
+  }
+
+  .tn-list-value {
+    margin: 0;
+    font-size: 0.86rem;
+    font-weight: 700;
+  }
+
+  .tn-level-bars {
+    margin-top: 0;
+    display: grid;
+    gap: 0.46rem;
+  }
+
+  .tn-level-row {
+    border-radius: 10px;
+    border: 1px solid rgba(130, 154, 211, 0.3);
+    background: rgba(12, 22, 42, 0.64);
+    padding: 0.36rem 0.5rem;
+  }
+
+  .tn-level-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    font-size: 0.76rem;
+    color: var(--txt-soft);
+  }
+
+  .tn-level-track {
+    margin-top: 0.24rem;
+    height: 7px;
+    border-radius: 999px;
+    background: rgba(128, 150, 204, 0.3);
+    overflow: hidden;
+  }
+
+  .tn-level-track > span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #32e6ff, #7f63ff);
+  }
+
+  .tn-upload-list {
+    margin-top: 0;
+    display: grid;
+    gap: 0.42rem;
+    max-height: 210px;
+    overflow: auto;
+    padding-right: 0.18rem;
+  }
+
+  .tn-upload-list::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .tn-upload-list::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(130, 154, 212, 0.46);
+  }
+
+  .tn-upload-item {
+    border-radius: 10px;
+    border: 1px solid rgba(130, 154, 212, 0.3);
+    background: rgba(12, 22, 42, 0.65);
+    padding: 0.42rem 0.52rem;
+  }
+
+  .tn-upload-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.42rem;
+  }
+
+  .tn-upload-main {
+    margin: 0;
+    font-size: 0.76rem;
+  }
+
+  .tn-upload-time {
+    margin: 0.15rem 0 0;
+    color: var(--txt-soft);
+    font-size: 0.72rem;
+  }
+
+  .tn-status {
+    border-radius: 999px;
+    border: 1px solid rgba(132, 156, 212, 0.42);
+    font-size: 0.67rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 0.12rem 0.42rem;
+  }
+
+  .tn-status.pending { border-color: rgba(255, 149, 31, 0.55); color: #ffd4a4; }
+  .tn-status.running { border-color: rgba(50, 230, 255, 0.55); color: #b8f8ff; }
+  .tn-status.success { border-color: rgba(166, 216, 44, 0.55); color: #e2ffb4; }
+  .tn-status.failed { border-color: rgba(255, 91, 122, 0.55); color: #ffc8d4; }
+
+  .tn-subject-meter {
+    margin-top: 0;
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .tn-subject-row {
+    display: grid;
+    gap: 0.24rem;
+  }
+
+  .tn-subject-top {
+    display: flex;
+    justify-content: space-between;
+    color: var(--txt-soft);
+    font-size: 0.74rem;
+  }
+
+  .tn-subject-track {
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(130, 152, 206, 0.3);
+    overflow: hidden;
+  }
+
+  .tn-subject-track > span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ff951f, #ffe75c);
+  }
+
+  .tn-quick-links {
+    margin-top: 0;
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .tn-quick-link {
+    border-radius: 999px;
+    border: 1px solid rgba(131, 154, 212, 0.42);
+    background: rgba(14, 24, 45, 0.68);
+    color: #e9f3ff;
+    text-decoration: none;
+    padding: 0.42rem 0.64rem;
+    font-size: 0.79rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.4rem;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+
+  .tn-quick-link:hover {
+    color: #f6fdff;
+    border-color: rgba(50, 230, 255, 0.65);
+    transform: translateY(-1px);
+  }
+
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 1180px) {
+    .tn-stat-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tn-main {
+      flex-direction: column;
+    }
+
+    .tn-right {
+      width: 100%;
+      min-width: 0;
+      max-width: none;
+      flex-basis: auto;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .teacher-neo {
+      border-radius: 16px;
+      padding: 0.65rem;
+    }
+
+    .tn-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .tn-actions {
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    .tn-btn {
+      min-width: 190px;
+    }
+
+    .tn-stat-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tn-health-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tn-right-panel {
+      padding: 0.68rem 0.72rem;
+    }
+
+    .tn-right-title {
+      font-size: 1rem;
+    }
+
+    .tn-upload-list {
+      max-height: 180px;
+    }
+  }
+</style>
+
+<section class="teacher-neo">
+  <div class="tn-layer">
+    <div class="tn-panel tn-header">
+      <div>
+        <p class="tn-kicker">Teacher Control Center</p>
+        <h2 class="tn-title">Academic Command Dashboard</h2>
+        <p class="tn-sub">Training status, dataset quality, student-risk monitoring, and model-health visibility.</p>
+      </div>
+      <div class="tn-actions">
+        <a class="tn-btn tn-btn-outline" href="{% url 'upload_dataset' %}">Dataset and Training</a>
+        <a class="tn-btn tn-btn-solid" href="{% url 'teacher_add_material' %}">Add Material</a>
       </div>
     </div>
-  </div>
-  <div class="col-lg-6">
-    <div class="card shadow-sm h-100">
-      <div class="card-body">
-        <h5>Level Distribution</h5>
-        <ul class="mb-0">
-          {% for row in level_counts %}
-            <li>{{ row.level }}: {{ row.count }}</li>
-          {% empty %}
-            <li class="text-muted">No student records yet.</li>
-          {% endfor %}
-        </ul>
+
+    <div class="tn-stat-grid">
+      <div class="tn-panel tn-stat-card">
+        <p class="tn-stat-label">Total Students</p>
+        <h3 class="tn-stat-value">{{ total_students }}</h3>
+        <p class="tn-stat-hint">Active learner records</p>
+      </div>
+      <div class="tn-panel tn-stat-card">
+        <p class="tn-stat-label">Average Overall</p>
+        <h3 class="tn-stat-value">{{ avg_overall|floatformat:1 }}%</h3>
+        <p class="tn-stat-hint">Cross-subject average</p>
+      </div>
+      <div class="tn-panel tn-stat-card">
+        <p class="tn-stat-label">Dataset Rows</p>
+        <h3 class="tn-stat-value">{{ dataset_rows }}</h3>
+        <p class="tn-stat-hint">
+          {% if dataset_sources %}
+            Sources:
+            {% for src in dataset_sources %}
+              {{ src }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+          {% else %}
+            No source detected
+          {% endif %}
+        </p>
+      </div>
+      <div class="tn-panel tn-stat-card">
+        <p class="tn-stat-label">Weakest Subject</p>
+        <h3 class="tn-stat-value">{{ weakest_subject }}</h3>
+        <p class="tn-stat-hint">Needs immediate content push</p>
       </div>
     </div>
-  </div>
-</div>
 
-<div class="row g-3 mb-3">
-  <div class="col-lg-6">
-    <div class="card shadow-sm h-100">
-      <div class="card-body">
-        <h5>Drift Monitoring</h5>
-        {% if latest_monitor_run %}
-          <div class="small text-muted mb-2">Last check: {{ latest_monitor_run.created_at|date:"Y-m-d H:i" }}</div>
-          <div>Overall drift: <strong>{{ latest_monitor_run.metrics.overall_drift|default:"-" }}</strong></div>
-          <div>Invalid ratio: <strong>{{ latest_monitor_run.metrics.invalid_ratio|default:"-" }}</strong></div>
-          <div>Should retrain: <strong>{{ latest_monitor_run.metrics.should_retrain|yesno:"Yes,No" }}</strong></div>
-        {% else %}
-          <div class="text-muted">No monitoring run yet. Run <code>python manage.py monitor_ml_models</code>.</div>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6">
-    <div class="card shadow-sm h-100">
-      <div class="card-body">
-        <h5>Feedback Loop</h5>
-        {% if latest_feedback_run %}
-          <div class="small text-muted mb-2">Last sync: {{ latest_feedback_run.created_at|date:"Y-m-d H:i" }}</div>
-          <div>Samples: <strong>{{ latest_feedback_run.metrics.sample_count|default:"-" }}</strong></div>
-          <div>Final MAE: <strong>{{ latest_feedback_run.metrics.mae_final|default:"-" }}</strong></div>
-          <div>Grade Accuracy: <strong>{{ latest_feedback_run.metrics.grade_accuracy|default:"-" }}</strong></div>
-        {% else %}
-          <div class="text-muted">No feedback evaluation run yet.</div>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</div>
+    <div class="tn-main">
+      <div class="tn-left">
+        <div class="tn-panel tn-health">
+          <h4 class="tn-section-head">Model Health Monitor</h4>
+          <div class="tn-health-grid">
+            <article class="tn-mini">
+              <h5>Drift Monitoring</h5>
+              {% if latest_monitor_run %}
+                <p class="tn-mini-time">Last check: {{ latest_monitor_run.created_at|date:"Y-m-d H:i" }}</p>
+                <p class="tn-mini-line">Overall drift: <strong>{{ latest_monitor_run.metrics.overall_drift|default:"-" }}</strong></p>
+                <p class="tn-mini-line">Invalid ratio: <strong>{{ latest_monitor_run.metrics.invalid_ratio|default:"-" }}</strong></p>
+                <p class="tn-mini-line">Should retrain: <strong>{{ latest_monitor_run.metrics.should_retrain|yesno:"Yes,No" }}</strong></p>
+              {% else %}
+                <p class="tn-mini-fallback">No monitoring run yet. Run <code>python manage.py monitor_ml_models</code>.</p>
+              {% endif %}
+            </article>
+            <article class="tn-mini">
+              <h5>Feedback Loop</h5>
+              {% if latest_feedback_run %}
+                <p class="tn-mini-time">Last sync: {{ latest_feedback_run.created_at|date:"Y-m-d H:i" }}</p>
+                <p class="tn-mini-line">Samples: <strong>{{ latest_feedback_run.metrics.sample_count|default:"-" }}</strong></p>
+                <p class="tn-mini-line">Final MAE: <strong>{{ latest_feedback_run.metrics.mae_final|default:"-" }}</strong></p>
+                <p class="tn-mini-line">Grade Accuracy: <strong>{{ latest_feedback_run.metrics.grade_accuracy|default:"-" }}</strong></p>
+              {% else %}
+                <p class="tn-mini-fallback">No feedback evaluation run yet.</p>
+              {% endif %}
+            </article>
+          </div>
+        </div>
 
-{% if ml_alerts %}
-  <div class="alert alert-warning">
-    <strong>ML Alerts:</strong>
-    <ul class="mb-0 mt-2">
-      {% for msg in ml_alerts %}
-        <li>{{ msg }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-{% endif %}
-
-<div class="row g-3 mb-3">
-  <div class="col-lg-7">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h5 class="mb-3">Latest Model Versions</h5>
-        <div class="table-responsive">
-          <table class="table table-sm align-middle">
-            <thead>
-              <tr>
-                <th>Task</th>
-                <th>Algorithm</th>
-                <th>Version</th>
-                <th>Metrics</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for model in trained_models %}
-                <tr>
-                  <td>{{ model.task_type }}</td>
-                  <td>{{ model.algorithm }}</td>
-                  <td>{{ model.version }}</td>
-                  <td class="small">
-                    {% if model.task_type == "regression" %}
-                      RMSE: {{ model.metrics.rmse|default:"-"|floatformat:4 }},
-                      MAE: {{ model.metrics.mae|default:"-"|floatformat:4 }}
-                    {% else %}
-                      Accuracy: {{ model.metrics.accuracy|default:"-"|floatformat:4 }},
-                      F1: {{ model.metrics.f1_weighted|default:"-"|floatformat:4 }}
-                    {% endif %}
-                  </td>
-                  <td>
-                    <a class="btn btn-sm btn-outline-primary" href="{% url 'download_model_version' model.id %}">Download</a>
-                  </td>
-                </tr>
-              {% empty %}
-                <tr><td colspan="5" class="text-muted">No trained models available.</td></tr>
+        {% if ml_alerts %}
+          <div class="tn-panel tn-alert">
+            <h5>ML Alerts</h5>
+            <ul class="tn-alert-list">
+              {% for msg in ml_alerts %}
+                <li>{{ msg }}</li>
               {% endfor %}
-            </tbody>
-          </table>
+            </ul>
+          </div>
+        {% endif %}
+
+        <div class="tn-panel tn-table-panel">
+          <h4 class="tn-table-title">Latest Model Versions</h4>
+          <div class="tn-table-wrap">
+            <table class="tn-table">
+              <thead>
+                <tr>
+                  <th>Task</th>
+                  <th>Algorithm</th>
+                  <th>Version</th>
+                  <th>Metrics</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for model in trained_models %}
+                  <tr>
+                    <td>{{ model.task_type }}</td>
+                    <td>{{ model.algorithm }}</td>
+                    <td>{{ model.version }}</td>
+                    <td>
+                      {% if model.task_type == "regression" %}
+                        RMSE {{ model.metrics.rmse|default:"-"|floatformat:4 }},
+                        MAE {{ model.metrics.mae|default:"-"|floatformat:4 }}
+                      {% else %}
+                        Accuracy {{ model.metrics.accuracy|default:"-"|floatformat:4 }},
+                        F1 {{ model.metrics.f1_weighted|default:"-"|floatformat:4 }}
+                      {% endif %}
+                    </td>
+                    <td>
+                      <a class="tn-download" href="{% url 'download_model_version' model.id %}">Download</a>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="5" class="tn-muted">No trained models available.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tn-panel tn-table-panel">
+          <h4 class="tn-table-title">At-Risk Students (Fail Risk &gt;= 0.40)</h4>
+          <div class="tn-table-wrap">
+            <table class="tn-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Semester</th>
+                  <th>Subject</th>
+                  <th>Fail Risk</th>
+                  <th>Predicted Grade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in at_risk_students %}
+                  <tr>
+                    <td>{{ row.user.username }}</td>
+                    <td>{{ row.semester.number }}</td>
+                    <td>{{ row.subject.name }}</td>
+                    <td><span class="tn-chip tn-chip-danger">{{ row.prob_fail|floatformat:2 }}</span></td>
+                    <td>{{ row.predicted_grade|default:"-" }}</td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="5" class="tn-muted">No at-risk students right now.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
-  <div class="col-lg-5">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h5 class="mb-3">Recent Dataset Uploads</h5>
-        <ul class="list-group list-group-flush">
-          {% for item in uploads %}
-            <li class="list-group-item px-0">
-              <div class="d-flex justify-content-between">
-                <span>#{{ item.id }} by {{ item.uploaded_by.username }}</span>
-                <span class="badge text-bg-secondary">{{ item.train_status }}</span>
-              </div>
-              <div class="small text-muted">{{ item.uploaded_at|date:"Y-m-d H:i" }}</div>
-            </li>
-          {% empty %}
-            <li class="list-group-item px-0 text-muted">No uploads yet.</li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
 
-<div class="card shadow-sm">
-  <div class="card-body">
-    <h5>At-Risk Students (Fail risk >= 0.40)</h5>
-    <div class="table-responsive">
-      <table class="table table-sm align-middle mb-0">
-        <thead>
-          <tr>
-            <th>Student</th>
-            <th>Semester</th>
-            <th>Subject</th>
-            <th>Fail Risk</th>
-            <th>Predicted Grade</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in at_risk_students %}
-            <tr>
-              <td>{{ row.user.username }}</td>
-              <td>{{ row.semester.number }}</td>
-              <td>{{ row.subject.name }}</td>
-              <td><span class="badge text-bg-danger">{{ row.prob_fail|floatformat:2 }}</span></td>
-              <td>{{ row.predicted_grade|default:"-" }}</td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="5" class="text-muted">No at-risk students right now.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <aside class="tn-right">
+        <div class="tn-panel tn-right-panel tn-menu-panel">
+          <h4 class="tn-right-title">Right Menu</h4>
+          <div class="tn-menu-list" role="tablist" aria-label="Teacher side menu">
+            <button type="button" class="tn-menu-btn is-active" role="tab" aria-selected="true" data-slide-target="upload-status">
+              <span class="tn-menu-main"><span class="tn-menu-icon">UP</span><span class="tn-menu-text">Upload Status</span></span>
+              <span class="tn-menu-arrow" aria-hidden="true">&gt;</span>
+            </button>
+            <button type="button" class="tn-menu-btn" role="tab" aria-selected="false" data-slide-target="level-distribution">
+              <span class="tn-menu-main"><span class="tn-menu-icon">LV</span><span class="tn-menu-text">Level Distribution</span></span>
+              <span class="tn-menu-arrow" aria-hidden="true">&gt;</span>
+            </button>
+            <button type="button" class="tn-menu-btn" role="tab" aria-selected="false" data-slide-target="subject-averages">
+              <span class="tn-menu-main"><span class="tn-menu-icon">SB</span><span class="tn-menu-text">Subject Averages</span></span>
+              <span class="tn-menu-arrow" aria-hidden="true">&gt;</span>
+            </button>
+            <button type="button" class="tn-menu-btn" role="tab" aria-selected="false" data-slide-target="recent-uploads">
+              <span class="tn-menu-main"><span class="tn-menu-icon">DS</span><span class="tn-menu-text">Recent Dataset Uploads</span></span>
+              <span class="tn-menu-arrow" aria-hidden="true">&gt;</span>
+            </button>
+            <button type="button" class="tn-menu-btn" role="tab" aria-selected="false" data-slide-target="quick-access">
+              <span class="tn-menu-main"><span class="tn-menu-icon">GO</span><span class="tn-menu-text">Quick Access</span></span>
+              <span class="tn-menu-arrow" aria-hidden="true">&gt;</span>
+            </button>
+          </div>
+        </div>
+
+        <section class="tn-panel tn-right-panel tn-slide-card is-active" data-slide-panel="upload-status">
+          <h4 class="tn-right-title">Upload Status</h4>
+          <div class="tn-list">
+            <div class="tn-list-item">
+              <p class="tn-list-label">Pending jobs</p>
+              <p class="tn-list-value">{{ upload_status_counts.pending|default:0 }}</p>
+            </div>
+            <div class="tn-list-item">
+              <p class="tn-list-label">Running jobs</p>
+              <p class="tn-list-value">{{ upload_status_counts.running|default:0 }}</p>
+            </div>
+            <div class="tn-list-item">
+              <p class="tn-list-label">Successful jobs</p>
+              <p class="tn-list-value">{{ upload_status_counts.success|default:0 }}</p>
+            </div>
+            <div class="tn-list-item">
+              <p class="tn-list-label">Failed jobs</p>
+              <p class="tn-list-value">{{ upload_status_counts.failed|default:0 }}</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="tn-panel tn-right-panel tn-slide-card" data-slide-panel="level-distribution">
+          <h4 class="tn-right-title">Level Distribution</h4>
+          <div class="tn-level-bars">
+            {% for row in level_counts %}
+              <div class="tn-level-row">
+                <div class="tn-level-top">
+                  <span>{{ row.level|default:"Unknown" }}</span>
+                  <span>{{ row.count }}</span>
+                </div>
+                <div class="tn-level-track">
+                  <span style="width: {% widthratio row.count total_students|default:1 100 %}%"></span>
+                </div>
+              </div>
+            {% empty %}
+              <p class="tn-muted">No student records yet.</p>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="tn-panel tn-right-panel tn-slide-card" data-slide-panel="subject-averages">
+          <h4 class="tn-right-title">Subject Averages</h4>
+          <div class="tn-subject-meter">
+            <div class="tn-subject-row">
+              <div class="tn-subject-top"><span>Math</span><span>{{ avg_math|floatformat:1 }}%</span></div>
+              <div class="tn-subject-track"><span style="width: {{ avg_math|floatformat:1 }}%"></span></div>
+            </div>
+            <div class="tn-subject-row">
+              <div class="tn-subject-top"><span>Physics</span><span>{{ avg_physics|floatformat:1 }}%</span></div>
+              <div class="tn-subject-track"><span style="width: {{ avg_physics|floatformat:1 }}%"></span></div>
+            </div>
+            <div class="tn-subject-row">
+              <div class="tn-subject-top"><span>Computer Science</span><span>{{ avg_cs|floatformat:1 }}%</span></div>
+              <div class="tn-subject-track"><span style="width: {{ avg_cs|floatformat:1 }}%"></span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="tn-panel tn-right-panel tn-slide-card" data-slide-panel="recent-uploads">
+          <h4 class="tn-right-title">Recent Dataset Uploads</h4>
+          <div class="tn-upload-list">
+            {% for item in uploads %}
+              <article class="tn-upload-item">
+                <div class="tn-upload-top">
+                  <p class="tn-upload-main">#{{ item.id }} by {{ item.uploaded_by.username }}</p>
+                  <span class="tn-status {{ item.train_status }}">{{ item.train_status }}</span>
+                </div>
+                <p class="tn-upload-time">{{ item.uploaded_at|date:"Y-m-d H:i" }}</p>
+              </article>
+            {% empty %}
+              <p class="tn-muted">No uploads yet.</p>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="tn-panel tn-right-panel tn-slide-card" data-slide-panel="quick-access">
+          <h4 class="tn-right-title">Quick Access</h4>
+          <div class="tn-quick-links">
+            <a class="tn-quick-link" href="{% url 'student_list' %}">Student List <span aria-hidden="true">-&gt;</span></a>
+            <a class="tn-quick-link" href="{% url 'material_list' %}">Study Materials <span aria-hidden="true">-&gt;</span></a>
+            <a class="tn-quick-link" href="{% url 'teacher_analytics' %}">Analytics View <span aria-hidden="true">-&gt;</span></a>
+            <a class="tn-quick-link" href="{% url 'teacher_recovery_overview' %}">Recovery Planner <span aria-hidden="true">-&gt;</span></a>
+          </div>
+        </section>
+      </aside>
     </div>
   </div>
-</div>
+</section>
+<script>
+  (function () {
+    var menuButtons = document.querySelectorAll("[data-slide-target]");
+    var panels = document.querySelectorAll("[data-slide-panel]");
+    if (!menuButtons.length || !panels.length) {
+      return;
+    }
+
+    function activatePanel(targetId) {
+      menuButtons.forEach(function (button) {
+        var isActiveBtn = button.getAttribute("data-slide-target") === targetId;
+        button.classList.toggle("is-active", isActiveBtn);
+        button.setAttribute("aria-selected", isActiveBtn ? "true" : "false");
+      });
+
+      panels.forEach(function (panel) {
+        var isActivePanel = panel.getAttribute("data-slide-panel") === targetId;
+        panel.classList.toggle("is-active", isActivePanel);
+      });
+    }
+
+    menuButtons.forEach(function (button) {
+      button.addEventListener("click", function () {
+        var targetId = button.getAttribute("data-slide-target");
+        if (!targetId) {
+          return;
+        }
+        activatePanel(targetId);
+      });
+    });
+
+    var defaultActive = document.querySelector(".tn-menu-btn.is-active");
+    if (defaultActive) {
+      var defaultTarget = defaultActive.getAttribute("data-slide-target");
+      if (defaultTarget) {
+        activatePanel(defaultTarget);
+      }
+    } else if (menuButtons[0]) {
+      var firstTarget = menuButtons[0].getAttribute("data-slide-target");
+      if (firstTarget) {
+        activatePanel(firstTarget);
+      }
+    }
+  })();
+</script>
 {% endblock %}
